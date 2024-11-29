@@ -1,0 +1,5 @@
+{
+  "name": "toaster",
+  "dependencies": ["@radix-ui/react-toast"],
+  "files": ["ui/toast.tsx", "ui/use-toast.ts", "ui/toaster.tsx"]
+}
