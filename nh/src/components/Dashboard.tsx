@@ -19,20 +19,20 @@ export function Dashboard() {
   const { toast } = useToast()
 
   const handleSignOut = async () => {
-    try {
-      await signOut(auth)
-      toast({
-        title: "Signed out successfully",
-        description: "See you next time!",
-      })
-    } catch (error) {
-      toast({
-        t
-        variant: "destructive",
-      })
-    }
+  try {
+    await signOut(auth)
+    toast({
+      title: "Signed out successfully",
+      description: "See you next time!",
+    })
+  } catch (error) {
+    toast({
+      title: "Error signing out",
+      description: error.message || "An unexpected error occurred.",
+      variant: "destructive",
+    })
   }
-
+  }
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <main className="flex-1 p-6">
