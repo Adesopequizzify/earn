@@ -1,55 +1,46 @@
-"use client"
+"use client";
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { signOut } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
-import { useAuth } from '@/context/AuthContext'
-import { Button } from '@/components/ui/button'
-import { useToast } from '@/components/ui/use-toast'
-import { Home, Wallet, ListTodo, LogOut, Settings } from 'lucide-react'
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Home, Wallet, ListTodo, LogOut, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 
 const tabs = [
-  { id: 'home', label: 'Home', icon: Home },
-  { id: 'tasks', label: 'Tasks', icon: ListTodo },
-  { id: 'wallet', label: 'Wallet', icon: Wallet },
-]
+  { id: "home", label: "Home", icon: Home },
+  { id: "tasks", label: "Tasks", icon: ListTodo },
+  { id: "wallet", label: "Wallet", icon: Wallet },
+];
 
 export function Dashboard() {
-  const [activeTab, setActiveTab] = useState('home')
-  const { toast } = useToast()
-  const { userData } = useAuth()
+  const [activeTab, setActiveTab] = useState("home");
+  const { userData } = useAuth();
 
   const handleSignOut = async () => {
-  try {
-    await signOut(auth)
-    toast({
-      title: "Signed out successfully",
-      description: "See you next time!",
-    })
-  } catch (error) {
-    toast({
-      title: "Error signing out",
-      description: error.message || "An unexpected error occurred.",
-      variant: "destructive",
-    })
-  }
-  }
+    try {
+      await signOut(auth);
+      console.log("Signed out successfully");
+    } catch (error) {
+      console.error("Error signing out:", error.message);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="flex justify-between items-center p-4 bg-card">
         <div className="flex items-center space-x-2">
           <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
-            {userData?.username?.[0].toUpperCase()}
+            {userData?.username?.[0]?.toUpperCase() || "U"}
           </div>
-          <span className="font-medium">{userData?.username}</span>
+          <span className="font-medium">{userData?.username || "User"}</span>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -72,18 +63,20 @@ export function Dashboard() {
         >
           <div className="text-center">
             <h2 className="text-2xl font-semibold mb-2">Points Balance</h2>
-            <p className="text-4xl font-bold text-primary">{userData?.points || 0}</p>
+            <p className="text-4xl font-bold text-primary">
+              {userData?.points || 0}
+            </p>
           </div>
           <div className="bg-card p-6 rounded-lg shadow-lg">
             <h2 className="text-2xl font-semibold mb-4">
-              {activeTab === 'home' && 'Home'}
-              {activeTab === 'tasks' && 'Tasks'}
-              {activeTab === 'wallet' && 'Wallet'}
+              {activeTab === "home" && "Home"}
+              {activeTab === "tasks" && "Tasks"}
+              {activeTab === "wallet" && "Wallet"}
             </h2>
             <p className="text-muted-foreground">
-              {activeTab === 'home' && 'Welcome to your dashboard. Here's an overview of your activities.'}
-              {activeTab === 'tasks' && 'No tasks available at the moment.'}
-              {activeTab === 'wallet' && 'Your wallet is empty. Start earning points!'}
+              {activeTab === "home" && "Welcome to your dashboard."}
+              {activeTab === "tasks" && "No tasks available."}
+              {activeTab === "wallet" && "Your wallet is empty."}
             </p>
           </div>
         </motion.div>
@@ -96,7 +89,9 @@ export function Dashboard() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex flex-col items-center p-3 rounded-full transition-colors ${
-                  activeTab === tab.id ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground"
                 }`}
               >
                 <tab.icon className="w-6 h-6" />
@@ -107,6 +102,5 @@ export function Dashboard() {
         </div>
       </nav>
     </div>
-  )
+  );
 }
-
