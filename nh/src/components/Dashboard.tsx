@@ -4,9 +4,16 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
+import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
-import { Home, Wallet, ListTodo, LogOut } from 'lucide-react'
+import { Home, Wallet, ListTodo, LogOut, Settings } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const tabs = [
   { id: 'home', label: 'Home', icon: Home },
@@ -17,6 +24,7 @@ const tabs = [
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState('home')
   const { toast } = useToast()
+  const { userData } = useAuth()
 
   const handleSignOut = async () => {
   try {
@@ -33,8 +41,28 @@ export function Dashboard() {
     })
   }
   }
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
+      <header className="flex justify-between items-center p-4 bg-card">
+        <div className="flex items-center space-x-2">
+          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
+            {userData?.username?.[0].toUpperCase()}
+          </div>
+          <span className="font-medium">{userData?.username}</span>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <Settings className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => {}}>Profile</DropdownMenuItem>
+            <DropdownMenuItem onSelect={handleSignOut}>Sign out</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </header>
       <main className="flex-1 p-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -42,7 +70,10 @@ export function Dashboard() {
           transition={{ duration: 0.5 }}
           className="max-w-4xl mx-auto space-y-8"
         >
-          <h1 className="text-4xl font-bold text-primary">Welcome to NH</h1>
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold mb-2">Points Balance</h2>
+            <p className="text-4xl font-bold text-primary">{userData?.points || 0}</p>
+          </div>
           <div className="bg-card p-6 rounded-lg shadow-lg">
             <h2 className="text-2xl font-semibold mb-4">
               {activeTab === 'home' && 'Home'}
@@ -50,15 +81,11 @@ export function Dashboard() {
               {activeTab === 'wallet' && 'Wallet'}
             </h2>
             <p className="text-muted-foreground">
-              {activeTab === 'home' && 'This is your home page. You can see an overview of your activities here.'}
-              {activeTab === 'tasks' && 'Manage your tasks and to-dos here.'}
-              {activeTab === 'wallet' && 'Check your points balance and transaction history here.'}
+              {activeTab === 'home' && 'Welcome to your dashboard. Here's an overview of your activities.'}
+              {activeTab === 'tasks' && 'No tasks available at the moment.'}
+              {activeTab === 'wallet' && 'Your wallet is empty. Start earning points!'}
             </p>
           </div>
-          <Button onClick={handleSignOut} variant="outline">
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
         </motion.div>
       </main>
       <nav className="fixed bottom-0 left-0 right-0 bg-background p-4">
