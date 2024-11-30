@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     siteName: 'WheatChain Airdrop',
     images: [
       {
-        url: '/og-image.png',
+        url: '/swhit-logo.png',
         width: 1200,
         height: 630,
         alt: 'WheatChain Airdrop - Earn SWHIT Tokens'
@@ -28,8 +28,12 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Join WheatChain Airdrop: Earn SWHIT Tokens',
-    description: 'Participate in tasks, earn SWHIT tokens, and be part of WheatChain's sustainable blockchain ecosystem. Join the airdrop now!',
-    images: ['/og-image.png'],
+    description: 'Participate in tasks, earn SWHIT tokens, and be part of WheatChain\'s sustainable blockchain ecosystem. Join the airdrop now!',
+    images: ['/swhit-logo.png'],
+  },
+  icons: {
+    icon: '/swhit-logo.png',
+    apple: '/swhit-logo.png',
   },
   keywords: ['WheatChain', 'Wheat-Sol', 'SWHIT token', 'airdrop', 'blockchain', 'sustainability', 'token distribution', 'community participation'],
   authors: [{ name: 'WheatChain Team' }],
