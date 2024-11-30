@@ -95,7 +95,7 @@ export function Dashboard() {
                     height={64}
                     className="mx-auto"
                   />
-                  <h2 className="text-2xl font-bold text-primary">{userData?.balance || 0} SWHIT</h2>
+                  <h2 className="text-2xl font-bold text-primary">{userData?.points || 0} SWHIT</h2>
                   <p className="text-sm text-muted-foreground">
                     LEGEND <span className="text-yellow-500">★</span> RANK
                   </p>
