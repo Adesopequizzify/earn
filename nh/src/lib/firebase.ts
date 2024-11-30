@@ -1,86 +1,66 @@
-"use client"
+import { initializeApp, getApps, getApp } from 'firebase/app'
+import { getAuth, sendEmailVerification, User } from 'firebase/auth'
+import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore'
 
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { signInWithEmailAndPassword, FirebaseError } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
-import { Button } from '@/components/ui/button'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { useToast } from '@/components/ui/use-toast'
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+}
 
-const formSchema = z.object({
-  email: z.string().email({
-    message: "Please enter a valid email.",
-  }),
-  password: z.string().min(6, {
-    message: "Password must be at least 6 characters.",
-  }),
-})
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
+const auth = getAuth(app)
+const db = getFirestore(app)
 
-export function Login() {
-  const { toast } = useToast()
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  })
+export { app, auth, db }
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+export const createUserDocument = async (user: User, username: string) => {
+  if (!user) return
+
+  const userRef = doc(db, 'users', user.uid)
+  const snapshot = await getDoc(userRef)
+
+  if (!snapshot.exists()) {
+    const { email } = user
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password)
-      toast({
-        title: "Logged in successfully",
-        description: "Welcome back!",
+      await setDoc(userRef, {
+        username,
+        email,
+        points: 2500,
+        rank: 'NOVICE',
+        createdAt: new Date(),
       })
     } catch (error) {
-      const errorMessage = error instanceof FirebaseError 
-        ? error.message.replace('Firebase: ', '').replace(/$$auth.*$$/, '')
-        : "An unexpected error occurred. Please try again.";
-      
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      })
+      console.error("Error creating user document", error)
     }
   }
+}
 
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input type="email" placeholder="Enter your email" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" placeholder="Enter your password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" className="w-full">Log In</Button>
-      </form>
-    </Form>
-  )
+export const sendVerificationEmail = async (user: User) => {
+  try {
+    await sendEmailVerification(user)
+  } catch (error) {
+    console.error("Error sending verification email", error)
+    throw error
+  }
+}
+
+export const updateUserRank = async (userId: string, points: number) => {
+  const userRef = doc(db, 'users', userId)
+  let newRank = 'NOVICE'
+
+  if (points >= 50000) newRank = 'LEGEND'
+  else if (points >= 10000) newRank = 'MASTER'
+  else if (points >= 5000) newRank = 'EXPERT'
+  else if (points >= 1000) newRank = 'ADEPT'
+
+  try {
+    await updateDoc(userRef, { rank: newRank })
+  } catch (error) {
+    console.error("Error updating user rank", error)
+  }
 }
 
