@@ -11,6 +11,9 @@ import { Card, CardContent } from './ui/card'
 export function AuthScreen() {
   const [isSignUp, setIsSignUp] = useState(false)
 
+  // Create a dummy Promise that resolves to undefined for the referral code
+  const dummyReferralCodePromise = Promise.resolve(undefined)
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background/95 p-4">
       <Card className="w-full max-w-md bg-background/60 backdrop-blur-sm border-muted/20">
@@ -35,7 +38,7 @@ export function AuthScreen() {
             <h1 className="text-2xl font-bold text-center text-primary">
               Welcome to WheatChain
             </h1>
-            {isSignUp ? <SignUp /> : <Login />}
+            {isSignUp ? <SignUp referralCodePromise={dummyReferralCodePromise} /> : <Login />}
             <div className="text-center">
               <Button 
                 variant="link" 
@@ -50,4 +53,3 @@ export function AuthScreen() {
     </div>
   )
 }
-
