@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import { Medal } from 'lucide-react'
 
 interface LeaderboardUser {
   username: string
@@ -46,6 +46,15 @@ export function Leaderboard() {
     return new Intl.NumberFormat().format(num)
   }
 
+  const getMedalColor = (index: number) => {
+    switch (index) {
+      case 0: return 'text-yellow-500'
+      case 1: return 'text-gray-300'
+      case 2: return 'text-amber-600'
+      default: return 'text-white/60'
+    }
+  }
+
   return (
     <div className="space-y-4 bg-black/95 p-4 rounded-xl">
       <h1 className="text-4xl font-bold text-white mb-6">Leaderboard</h1>
@@ -72,19 +81,15 @@ export function Leaderboard() {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
                 {user.avatar ? (
-                  <Image
+                  <img
                     src={user.avatar.startsWith('/') ? user.avatar : `/${user.avatar}`}
                     alt={`${user.username}'s avatar`}
-                    width={24}
-                    height={24}
                     className="w-6 h-6 rounded-full"
                   />
                 ) : (
-                  <Image
+                  <img
                     src="/assets/logos/main.png"
                     alt="SWHIT Logo"
-                    width={24}
-                    height={24}
                     className="w-6 h-6"
                   />
                 )}
@@ -98,13 +103,7 @@ export function Leaderboard() {
             </div>
             <div className="flex items-center gap-2">
               {index < 3 ? (
-                <Image
-                  src={`/assets/medals/${index + 1}.png`}
-                  alt={`Rank ${index + 1}`}
-                  width={24}
-                  height={24}
-                  className="w-6 h-6"
-                />
+                <Medal className={`w-6 h-6 ${getMedalColor(index)}`} />
               ) : (
                 <span className="text-white/60">#{index + 1}</span>
               )}
