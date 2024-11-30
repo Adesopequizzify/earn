@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
-import { getAuth, sendEmailVerification, User } from 'firebase/auth'
+import { getAuth, sendEmailVerification, User, reload } from 'firebase/auth'
 import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -32,6 +32,7 @@ export const createUserDocument = async (user: User, username: string) => {
         points: 2500,
         rank: 'NOVICE',
         createdAt: new Date(),
+        emailVerified: false,
       })
     } catch (error) {
       console.error("Error creating user document", error)
@@ -44,6 +45,26 @@ export const sendVerificationEmail = async (user: User) => {
     await sendEmailVerification(user)
   } catch (error) {
     console.error("Error sending verification email", error)
+    throw error
+  }
+}
+
+export const checkEmailVerification = async (user: User): Promise<boolean> => {
+  try {
+    await reload(user)
+    return user.emailVerified
+  } catch (error) {
+    console.error("Error checking email verification", error)
+    throw error
+  }
+}
+
+export const updateUserEmailVerificationStatus = async (userId: string, isVerified: boolean) => {
+  const userRef = doc(db, 'users', userId)
+  try {
+    await updateDoc(userRef, { emailVerified: isVerified })
+  } catch (error) {
+    console.error("Error updating user email verification status", error)
     throw error
   }
 }
