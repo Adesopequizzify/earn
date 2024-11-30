@@ -1,12 +1,13 @@
 "use client"
 
-import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from 'react'
+import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { collection, query, where, getDocs } from 'firebase/firestore'
+import { collection, query, where, getDocs, updateDoc, doc, setDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import * as Icons from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import { Loader2, Check, Users, Zap } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface Task {
   id: string
@@ -14,89 +15,201 @@ interface Task {
   reward: number
   icon: string
   type: 'limited' | 'in-game' | 'partners'
-  link: string
+  link?: string
+  completed?: boolean
 }
+
+type TaskStatus = 'idle' | 'checking' | 'claiming' | 'completed'
 
 export function Tasks() {
   const [tasks, setTasks] = useState<Task[]>([])
+  const [taskStatus, setTaskStatus] = useState<Record<string, TaskStatus>>({})
+  const { user, userData } = useAuth()
 
   useEffect(() => {
     const fetchTasks = async () => {
-      const tasksRef = collection(db, 'tasks')
-      const tasksQuery = query(tasksRef, where('active', '==', true))
-      const tasksSnapshot = await getDocs(tasksQuery)
-      const tasksData = tasksSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Task))
-      setTasks(tasksData)
+      try {
+        const tasksRef = collection(db, 'tasks')
+        const tasksQuery = query(tasksRef, where('active', '==', true))
+        const tasksSnapshot = await getDocs(tasksQuery)
+        const tasksData = tasksSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          completed: userData?.completedTasks?.includes(doc.id)
+        } as Task))
+        setTasks(tasksData)
+        
+        // Initialize task statuses
+        const initialStatuses: Record<string, TaskStatus> = {}
+        tasksData.forEach(task => {
+          initialStatuses[task.id] = task.completed ? 'completed' : 'idle'
+        })
+        setTaskStatus(initialStatuses)
+      } catch (error) {
+        console.error('Error fetching tasks:', error)
+      }
     }
 
-    fetchTasks()
-  }, [])
+    if (userData) {
+      fetchTasks()
+    }
+  }, [userData])
 
-  const renderIcon = (iconName: string) => {
-    const Icon = Icons[iconName as keyof typeof Icons]
-    return Icon ? <Icon className="w-6 h-6" /> : null
+  const handleTaskAction = async (task: Task) => {
+    if (!user || taskStatus[task.id] === 'completed') return
+
+    if (taskStatus[task.id] === 'idle') {
+      // Start task
+      if (task.link) {
+        window.open(task.link, '_blank')
+      }
+      setTaskStatus(prev => ({ ...prev, [task.id]: 'checking' }))
+      
+      // Simulate verification (5 seconds)
+      setTimeout(() => {
+        setTaskStatus(prev => ({ ...prev, [task.id]: 'claiming' }))
+      }, 5000)
+    } else if (taskStatus[task.id] === 'claiming') {
+      try {
+        // Update user's points
+        const userRef = doc(db, 'users', user.uid)
+        await updateDoc(userRef, {
+          points: (userData?.points || 0) + task.reward,
+          completedTasks: [...(userData?.completedTasks || []), task.id]
+        })
+
+        // Add to rewards history
+        const rewardRef = doc(collection(db, 'rewards'))
+        await setDoc(rewardRef, {
+          userId: user.uid,
+          taskId: task.id,
+          amount: task.reward,
+          description: `Completed: ${task.name}`,
+          date: new Date().toISOString()
+        })
+
+        setTaskStatus(prev => ({ ...prev, [task.id]: 'completed' }))
+      } catch (error) {
+        console.error('Error claiming reward:', error)
+      }
+    }
+  }
+
+  const getTaskButton = (task: Task) => {
+    const status = taskStatus[task.id]
+    
+    if (status === 'completed') {
+      return <Check className="w-5 h-5 text-green-500" />
+    }
+    
+    if (status === 'checking') {
+      return (
+        <button
+          className="px-4 py-1.5 rounded-full bg-blue-500 text-white flex items-center gap-2"
+          disabled
+        >
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Checking
+        </button>
+      )
+    }
+    
+    if (status === 'claiming') {
+      return (
+        <button
+          onClick={() => handleTaskAction(task)}
+          className="px-4 py-1.5 rounded-full bg-green-500 text-white"
+        >
+          Claim
+        </button>
+      )
+    }
+    
+    return (
+      <button
+        onClick={() => handleTaskAction(task)}
+        className="px-4 py-1.5 rounded-full bg-white text-black font-medium"
+      >
+        Start
+      </button>
+    )
+  }
+
+  const getTaskIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'users': return <Users className="w-6 h-6" />
+      case 'zap': return <Zap className="w-6 h-6" />
+      default: return <div className="w-6 h-6">🐾</div>
+    }
   }
 
   return (
-    <Card className="bg-background/60 backdrop-blur-sm border-muted/20">
-      <CardHeader>
-        <CardTitle className="text-2xl">
-          TASKS
-        </CardTitle>
-        <p className="text-xl font-light text-muted-foreground">
-          GET REWARDS FOR
-          <br />
-          COMPLETING QUESTS
-        </p>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="in-game">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="limited">Limited</TabsTrigger>
-            <TabsTrigger value="in-game">
-              In-game
-              <span className="ml-1 text-xs rounded-full bg-primary/10 px-2">
-                {tasks.filter(task => task.type === 'in-game').length}
-              </span>
-            </TabsTrigger>
-            <TabsTrigger value="partners">Partners</TabsTrigger>
-          </TabsList>
-          {['limited','in-game', 'partners'].map(tabValue => (
-            <TabsContent key={tabValue} value={tabValue} className="mt-4">
-              {tasks.filter(task => task.type === tabValue).length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No {tabValue} tasks available at the moment
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {tasks.filter(task => task.type === tabValue).map((task) => (
-                    <div key={task.id} className="flex items-center justify-between p-4 rounded-lg bg-card/50">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 rounded-lg bg-primary/10">
-                          {renderIcon(task.icon)}
-                        </div>
-                        <span>{task.name}</span>
+    <div className="bg-black/95 p-4 rounded-xl">
+      <Tabs defaultValue="in-game">
+        <TabsList className="w-full grid grid-cols-3 bg-transparent border-b border-white/10 mb-4">
+          <TabsTrigger 
+            value="limited"
+            className={cn(
+              "data-[state=active]:bg-white data-[state=active]:text-black rounded-full",
+              "text-white/60"
+            )}
+          >
+            Limited
+          </TabsTrigger>
+          <TabsTrigger 
+            value="in-game"
+            className={cn(
+              "data-[state=active]:bg-white data-[state=active]:text-black rounded-full",
+              "text-white/60"
+            )}
+          >
+            In-game
+            <span className="ml-1 text-xs bg-white/10 px-2 rounded-full">
+              {tasks.filter(t => t.type === 'in-game' && !taskStatus[t.id]?.includes('completed')).length}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="partners"
+            className={cn(
+              "data-[state=active]:bg-white data-[state=active]:text-black rounded-full",
+              "text-white/60"
+            )}
+          >
+            Partners
+          </TabsTrigger>
+        </TabsList>
+
+        {['limited', 'in-game', 'partners'].map(tabValue => (
+          <TabsContent key={tabValue} value={tabValue}>
+            <div className="space-y-4">
+              {tasks
+                .filter(task => task.type === tabValue)
+                .map((task) => (
+                  <div
+                    key={task.id}
+                    className="flex items-center justify-between p-4 border-b border-white/10 last:border-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-12 h-12 rounded-xl flex items-center justify-center",
+                        taskStatus[task.id] === 'completed' ? 'bg-green-500/20' : 'bg-white/10'
+                      )}>
+                        {getTaskIcon(task.icon)}
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <span className="text-sm text-muted-foreground">
-                          +{task.reward.toLocaleString()} SWHIT
-                        </span>
-                        <Button size="sm" variant="secondary" onClick={() => window.open(task.link, '_blank')}>
-                          Start
-                        </Button>
+                      <div>
+                        <div className="text-white font-medium">{task.name}</div>
+                        <div className="text-white/60 text-sm">
+                          +{task.reward.toLocaleString()} PAWS
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-          ))}
-        </Tabs>
-      </CardContent>
-    </Card>
+                    {getTaskButton(task)}
+                  </div>
+                ))}
+            </div>
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
   )
 }
-
