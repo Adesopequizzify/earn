@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
+import { FirebaseError } from 'firebase/app'
 
 const formSchema = z.object({
   username: z.string().min(3, {
@@ -62,9 +63,12 @@ export function Onboarding({ isNewUser = false }) {
         setStep('signup')
       }
     } catch (error) {
+      const errorMessage = error instanceof FirebaseError 
+        ? error.message 
+        : "An unexpected error occurred. Please try again.";
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       })
     }
