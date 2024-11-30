@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { signOut } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { auth, db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
@@ -17,21 +17,43 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Card, CardContent } from "@/components/ui/card"
 import { RewardsModal } from './RewardsModal'
-import { Leaderboard } from './Leaderboard'
 import { Tasks } from './Tasks'
-import { Rank } from './Rank'
+import { Leaderboard } from './Leaderboard'
+import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore'
 
 const tabs = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'tasks', label: 'Tasks', icon: ListTodo },
-  { id: 'rank', label: 'Rank', icon: Trophy },
+  { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
 ]
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState('home')
   const [showRewards, setShowRewards] = useState(false)
+  const [banners, setBanners] = useState([])
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
   const { toast } = useToast()
   const { userData } = useAuth()
+
+  useEffect(() => {
+    const fetchBanners = async () => {
+      const bannersRef = collection(db, 'banners')
+      const bannersQuery = query(bannersRef, orderBy('createdAt', 'desc'), limit(5))
+      const bannersSnapshot = await getDocs(bannersQuery)
+      const bannersData = bannersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      setBanners(bannersData)
+    }
+
+    fetchBanners()
+  }, [])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentBannerIndex((prevIndex) => (prevIndex + 1) % banners.length)
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [banners])
 
   const handleSignOut = async () => {
     try {
@@ -97,9 +119,28 @@ export function Dashboard() {
                   />
                   <h2 className="text-2xl font-bold text-primary">{userData?.points || 0} SWHIT</h2>
                   <p className="text-sm text-muted-foreground">
-                    LEGEND <span className="text-yellow-500">★</span> RANK
+                    {userData?.rank || 'NOVICE'} <span className="text-yellow-500">★</span> RANK
                   </p>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-primary/20 bg-background/60 backdrop-blur-sm overflow-hidden">
+              <CardContent className="p-0">
+                {banners.length > 0 ? (
+                  <div className="relative h-40">
+                    <Image
+                      src={banners[currentBannerIndex].imageUrl}
+                      alt="Banner"
+                      layout="fill"
+                      objectFit="cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-40 flex items-center justify-center text-muted-foreground">
+                    No banners available
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -120,13 +161,11 @@ export function Dashboard() {
               <Star className="mr-2 h-4 w-4" />
               Check your rewards
             </Button>
-
-            <Leaderboard />
           </motion.div>
         )}
 
         {activeTab === 'tasks' && <Tasks />}
-        {activeTab === 'rank' && <Rank />}
+        {activeTab === 'leaderboard' && <Leaderboard />}
       </main>
 
       <nav className="sticky bottom-0 left-0 right-0 p-4 backdrop-blur-sm bg-background/60 border-t border-muted/20">
