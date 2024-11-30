@@ -33,6 +33,12 @@ export function EmailVerification() {
     }
   }
 
+  const handleManualVerification = () => {
+    // In a real application, you would implement a server-side check here
+    // For now, we'll just simulate a successful verification
+    window.location.reload()
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
       <motion.div
@@ -45,9 +51,14 @@ export function EmailVerification() {
         <p className="text-muted-foreground mb-6">
           We've sent a verification email to your inbox. Please verify your email to continue.
         </p>
-        <Button onClick={handleResendVerification} disabled={isResending}>
-          {isResending ? "Resending..." : "Resend Verification Email"}
-        </Button>
+        <div className="space-y-4">
+          <Button onClick={handleResendVerification} disabled={isResending}>
+            {isResending ? "Resending..." : "Resend Verification Email"}
+          </Button>
+          <Button onClick={handleManualVerification} variant="outline">
+            I've Verified My Email
+          </Button>
+        </div>
       </motion.div>
     </div>
   )
