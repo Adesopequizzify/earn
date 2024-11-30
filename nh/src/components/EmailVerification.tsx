@@ -2,15 +2,16 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { sendVerificationEmail } from '@/lib/firebase'
+import { sendVerificationEmail, checkEmailVerification } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
 
 export function EmailVerification() {
-  const { user } = useAuth()
+  const { user, refreshEmailVerification } = useAuth()
   const { toast } = useToast()
   const [isResending, setIsResending] = useState(false)
+  const [isChecking, setIsChecking] = useState(false)
 
   const handleResendVerification = async () => {
     if (!user) return
@@ -33,10 +34,34 @@ export function EmailVerification() {
     }
   }
 
-  const handleManualVerification = () => {
-    // In a real application, you would implement a server-side check here
-    // For now, we'll just simulate a successful verification
-    window.location.reload()
+  const handleManualVerification = async () => {
+    if (!user) return
+
+    setIsChecking(true)
+    try {
+      const isVerified = await checkEmailVerification(user)
+      if (isVerified) {
+        await refreshEmailVerification()
+        toast({
+          title: "Email verified",
+          description: "Your email has been successfully verified.",
+        })
+      } else {
+        toast({
+          title: "Email not verified",
+          description: "Please check your inbox and click the verification link.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to check email verification. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsChecking(false)
+    }
   }
 
   return (
@@ -55,8 +80,8 @@ export function EmailVerification() {
           <Button onClick={handleResendVerification} disabled={isResending}>
             {isResending ? "Resending..." : "Resend Verification Email"}
           </Button>
-          <Button onClick={handleManualVerification} variant="outline">
-            I've Verified My Email
+          <Button onClick={handleManualVerification} variant="outline" disabled={isChecking}>
+            {isChecking ? "Checking..." : "I've Verified My Email"}
           </Button>
         </div>
       </motion.div>
