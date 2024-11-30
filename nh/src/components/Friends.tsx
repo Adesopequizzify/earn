@@ -32,7 +32,7 @@ export function Friends() {
   }
 
   const handleCopyLink = () => {
-    const referralLink = `https://yourapp.com/signup?referral=${userData?.referralCode}`
+    const referralLink = `https://swhit-g.vercel.app/signup?referral=${userData?.referralCode}`
     navigator.clipboard.writeText(referralLink).then(() => {
       toast({
         title: "Link copied",
