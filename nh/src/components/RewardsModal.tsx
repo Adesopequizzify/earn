@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
-import * as Icons from 'lucide-react'
 
 interface RewardsModalProps {
   isOpen: boolean
@@ -17,7 +16,6 @@ interface Reward {
   description: string
   amount: number
   date: string
-  icon: keyof typeof Icons
 }
 
 export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
@@ -48,10 +46,6 @@ export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
     }
   }, [isOpen, user])
 
-  const renderIcon = (iconName: keyof typeof Icons) => {
-    const Icon = Icons[iconName]
-    return Icon ? <Icon className="w-6 h-6" /> : null
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -69,14 +63,9 @@ export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
                   key={reward.id}
                   className="flex items-center justify-between py-4 border-b last:border-b-0"
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      {renderIcon(reward.icon)}
-                    </div>
-                    <div>
-                      <p>{reward.description}</p>
-                      <p className="text-sm text-muted-foreground">{new Date(reward.date).toLocaleDateString()}</p>
-                    </div>
+                  <div>
+                    <p>{reward.description}</p>
+                    <p className="text-sm text-muted-foreground">{new Date(reward.date).toLocaleDateString()}</p>
                   </div>
                   <div className="flex flex-col items-end">
                     <span className="text-green-500">+{reward.amount} SWHIT</span>
