@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -25,7 +25,11 @@ const formSchema = z.object({
   referralCode: z.string().optional(),
 })
 
-export function SignUp() {
+interface SignUpProps {
+  referralCode?: string;
+}
+
+export function SignUp({ referralCode }: SignUpProps) {
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const form = useForm<z.infer<typeof formSchema>>({
@@ -34,9 +38,15 @@ export function SignUp() {
       username: "",
       email: "",
       password: "",
-      referralCode: "",
+      referralCode: referralCode || "",
     },
   })
+
+  useEffect(() => {
+    if (referralCode) {
+      form.setValue('referralCode', referralCode)
+    }
+  }, [referralCode, form])
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
