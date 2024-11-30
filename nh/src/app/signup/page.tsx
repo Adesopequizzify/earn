@@ -6,13 +6,13 @@ export const metadata: Metadata = {
   description: 'Create your WheatChain account',
 }
 
-interface PageProps {
-  searchParams: {
-    [key: string]: string | string[] | undefined
-  }
-}
+type SearchParams = { [key: string]: string | string[] | undefined }
 
-export default function SignUpPage({ searchParams }: PageProps) {
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams: SearchParams
+}) {
   const referralCode = typeof searchParams.referral === 'string' ? searchParams.referral : undefined
   return <SignUp referralCode={referralCode} />
 }
