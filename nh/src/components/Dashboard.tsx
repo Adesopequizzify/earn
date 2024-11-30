@@ -50,7 +50,7 @@ export function Dashboard() {
   }
 
   const handleJoinCommunity = () => {
-    window.open('https://t.me/your_telegram_community', '_blank')
+    window.open('https://t.me/swhit_tg', '_blank')
   }
 
   return (
@@ -89,13 +89,13 @@ export function Dashboard() {
               <CardContent className="pt-6">
                 <div className="text-center space-y-2">
                   <Image
-                    src="/assets/logos/swhit-logo.png"
+                    src="/assets/logos/swhit-logo.jpg"
                     alt="SWHIT Logo"
                     width={64}
                     height={64}
                     className="mx-auto"
                   />
-                  <h2 className="text-2xl font-bold text-primary">{userData?.swhit || 0} SWHIT</h2>
+                  <h2 className="text-2xl font-bold text-primary">{userData?.balance || 0} SWHIT</h2>
                   <p className="text-sm text-muted-foreground">
                     LEGEND <span className="text-yellow-500">★</span> RANK
                   </p>
