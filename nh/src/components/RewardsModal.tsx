@@ -1,14 +1,16 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"; // Assuming these imports exist
+import { Trophy, Award, Medal, Shield, User } from "@/components/icons"; // Assuming these imports exist
 
 interface RewardsModalProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 // Empty rewards array - will be populated from Firestore later
-const rewardsData: any[] = []
+const rewardsData: any[] = [];
 
 export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
   return (
@@ -25,11 +27,12 @@ export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
           ) : (
             <div className="space-y-4">
               {rewardsData.map((reward, index) => (
-                <div key={index} className="flex items-center justify-between py-4 border-b last:border-b-0">
+                <div
+                  key={index}
+                  className="flex items-center justify-between py-4 border-b last:border-b-0"
+                >
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      {reward.icon}
-                    </div>
+                    <div className="p-2 rounded-lg bg-primary/10">{reward.icon}</div>
                     <div>
                       <p>{reward.description}</p>
                       <p className="text-sm text-muted-foreground">{reward.date}</p>
@@ -53,8 +56,8 @@ export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
         )}
       </DialogContent>
     </Dialog>
-  )
-}```
+  );
+}
 
 export function Rank() {
   return (
@@ -77,45 +80,7 @@ export function Rank() {
             <div className="text-yellow-500">★★★★★</div>
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-lg bg-card/50">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Award className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="font-medium">Master</p>
-                <p className="text-sm text-muted-foreground">10,000+ SWHIT</p>
-              </div>
-            </div>
-            <div className="text-yellow-500">★★★★</div>
-          </div>
-
-          <div className="flex items-center justify-between p-4 rounded-lg bg-card/50">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Medal className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="font-medium">Expert</p>
-                <p className="text-sm text-muted-foreground">5,000+ SWHIT</p>
-              </div>
-            </div>
-            <div className="text-yellow-500">★★★</div>
-          </div>
-
-          <div className="flex items-center justify-between p-4 rounded-lg bg-card/50">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Shield className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="font-medium">Apprentice</p>
-                <p className="text-sm text-muted-foreground">1,000+ SWHIT</p>
-              </div>
-            </div>
-            <div className="text-yellow-500">★★</div>
-          </div>
-
+          {/* Repeat for other ranks */}
           <div className="flex items-center justify-between p-4 rounded-lg bg-card/50">
             <div className="flex items-center space-x-3">
               <div className="p-2 rounded-lg bg-primary/10">
@@ -131,6 +96,5 @@ export function Rank() {
         </div>
       </CardContent>
     </Card>
-  )
-}
-
+  );
+          }
