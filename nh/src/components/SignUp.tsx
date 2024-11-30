@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
+import { FirebaseError } from 'firebase/app'
 import { auth, createUserDocument, sendVerificationEmail } from '@/lib/firebase'
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
@@ -46,13 +47,15 @@ export function SignUp() {
         description: "Please check your email for verification.",
       })
     } catch (error) {
+      const errorMessage = error instanceof FirebaseError 
+        ? error.message 
+        : "An unexpected error occurred. Please try again.";
+      
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       })
-    } finally {
-      setIsLoading(false)
     }
   }
 
