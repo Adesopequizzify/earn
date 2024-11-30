@@ -9,7 +9,7 @@ export function SplashScreen() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <Image src="/logo.png" alt="NH Logo" width={150} height={150} />
+        <Image src="/main-logo.jpg" alt="SWHIT LOGO" width={150} height={150} />
       </motion.div>
       <motion.h1
         initial={{ opacity: 0, y: 20 }}
