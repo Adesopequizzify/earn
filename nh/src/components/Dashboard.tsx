@@ -111,7 +111,7 @@ export function Dashboard() {
               <CardContent className="pt-6">
                 <div className="text-center space-y-2">
                   <Image
-                    src="/assets/logos/swhit-logo.png"
+                    src="/assets/logos/main.png"
                     alt="SWHIT Logo"
                     width={64}
                     height={64}
@@ -197,4 +197,3 @@ export function Dashboard() {
     </div>
   )
 }
-
