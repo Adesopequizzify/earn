@@ -24,7 +24,7 @@ export function AuthScreen() {
             <div className="flex justify-center mb-6">
               <div className="relative w-16 h-16">
                 <Image
-                  src="/main-logo.jpg"
+                  src="/assets/logos/main-logo.jpg"
                   alt="NH Logo"
                   width={64}
                   height={64}
