@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { collection, query, where, getDocs, updateDoc, doc, setDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
-import { Loader2, Check } from 'lucide-react'
+import { Loader2, Check, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
 
@@ -192,13 +192,17 @@ export function Tasks() {
                         "w-12 h-12 rounded-xl flex items-center justify-center",
                         taskStatus[task.id] === 'completed' ? 'bg-green-500/20' : 'bg-white/10'
                       )}>
-                        <Image 
-                          src={task.icon} 
-                          alt={task.name}
-                          width={24}
-                          height={24}
-                          className="w-6 h-6"
-                        />
+                        {task.icon ? (
+                          <Image 
+                            src={task.icon.startsWith('/') ? task.icon : `/${task.icon}`}
+                            alt={task.name}
+                            width={24}
+                            height={24}
+                            className="w-6 h-6"
+                          />
+                        ) : (
+                          <Zap className="w-6 h-6 text-white" />
+                        )}
                       </div>
                       <div>
                         <div className="text-white font-medium">{task.name}</div>
@@ -217,3 +221,4 @@ export function Tasks() {
     </div>
   )
 }
+
