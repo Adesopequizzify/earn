@@ -1,11 +1,9 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { Card, CardContent } from "@/components/ui/card"
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import Image from 'next/image'
-import { Medal } from 'lucide-react'
 
 interface LeaderboardUser {
   username: string
@@ -20,11 +18,9 @@ export function Leaderboard() {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        // Get total users count
         const usersSnapshot = await getDocs(collection(db, 'users'))
         setTotalUsers(usersSnapshot.size)
 
-        // Get top users
         const leaderboardQuery = query(
           collection(db, 'users'),
           orderBy('points', 'desc'),
@@ -49,54 +45,55 @@ export function Leaderboard() {
     return new Intl.NumberFormat().format(num)
   }
 
-  const getMedalColor = (position: number) => {
-    switch (position) {
-      case 0: return 'text-yellow-500' // Gold
-      case 1: return 'text-gray-300'   // Silver
-      case 2: return 'text-amber-600'  // Bronze
-      default: return 'text-gray-400'
-    }
-  }
-
   return (
     <div className="space-y-4 bg-black/95 p-4 rounded-xl">
-      {/* Total Users */}
-      <div className="flex justify-between items-center text-white/90 px-2">
-        <span className="text-xl">Total</span>
-        <span className="text-xl">{formatNumber(totalUsers)} users</span>
+      <h1 className="text-4xl font-bold text-white mb-6">Leaderboard</h1>
+      
+      <div className="bg-black/40 rounded-xl p-4 mb-4">
+        <div className="flex justify-between items-center text-white/90">
+          <span className="text-xl">Total</span>
+          <span className="text-xl">{formatNumber(totalUsers)} users</span>
+        </div>
       </div>
 
-      {/* Leaderboard List */}
       <div className="space-y-2">
         {leaderboardData.map((user, index) => (
           <div
             key={user.username}
-            className="flex items-center justify-between bg-black/40 rounded-xl p-4"
+            className={cn(
+              "flex items-center justify-between p-4 rounded-xl",
+              index === 0 ? "bg-[#423F1E]" : 
+              index === 1 ? "bg-[#3A3A3A]" : 
+              index === 2 ? "bg-[#3E2A21]" : 
+              "bg-black/40"
+            )}
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-                {user.avatar ? (
-                  <Image
-                    src={user.avatar}
-                    alt={user.username}
-                    width={40}
-                    height={40}
-                    className="rounded-lg"
-                  />
-                ) : (
-                  <div className="w-6 h-6">🐾</div>
-                )}
+                <Image
+                  src="/assets/logos/main.png"
+                  alt="SWHIT Logo"
+                  width={24}
+                  height={24}
+                  className="w-6 h-6"
+                />
               </div>
               <div>
                 <div className="text-white font-medium">{user.username}</div>
                 <div className="text-white/60 text-sm">
-                  {formatNumber(user.points)} PAWS
+                  {formatNumber(user.points)} SWHIT
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
               {index < 3 ? (
-                <Medal className={`w-6 h-6 ${getMedalColor(index)}`} />
+                <Image
+                  src={`/assets/medals/${index + 1}.png`}
+                  alt={`Rank ${index + 1}`}
+                  width={24}
+                  height={24}
+                  className="w-6 h-6"
+                />
               ) : (
                 <span className="text-white/60">#{index + 1}</span>
               )}
