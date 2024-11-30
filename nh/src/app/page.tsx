@@ -8,7 +8,7 @@ import { Dashboard } from '@/components/Dashboard'
 import { EmailVerification } from '@/components/EmailVerification'
 
 export default function Home() {
-  const { user, loading } = useAuth()
+  const { user, loading, emailVerified } = useAuth()
   const [isInitializing, setIsInitializing] = useState(true)
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function Home() {
     return <AuthScreen />
   }
 
-  if (!user.emailVerified) {
+  if (!emailVerified) {
     return <EmailVerification />
   }
 
