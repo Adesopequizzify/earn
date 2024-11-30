@@ -20,20 +20,24 @@ export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
           <DialogTitle>Your Rewards</DialogTitle>
         </DialogHeader>
         <ScrollArea className="h-[300px] pr-4">
-          {rewardsData.map((reward, index) => (
-            <div key={index} className="flex items-center justify-between py-2 border-b last:border-b-0">
-              <div className="flex items-center space-x-2">
-                <img src={reward.icon} alt="Quest" className="w-6 h-6" />
-                <div>
-                  <p>{reward.description}</p>
-                  <p className="text-sm text-muted-foreground">{reward.date}</p>
+          {rewardsData.length === 0 ? (
+            <p className="text-center text-muted-foreground">No rewards available</p>
+          ) : (
+            rewardsData.map((reward, index) => (
+              <div key={index} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                <div className="flex items-center space-x-2">
+                  <img src={reward.icon} alt="Quest" className="w-6 h-6" />
+                  <div>
+                    <p>{reward.description}</p>
+                    <p className="text-sm text-muted-foreground">{reward.date}</p>
+                  </div>
                 </div>
+                <span className="text-green-500">+{reward.amount} SWHIT</span>
               </div>
-              <span className="text-green-500">+{reward.amount} SWHIT</span>
-            </div>
-          ))}
+            ))
+          )}
         </ScrollArea>
-      </DialogContent></Dialog>
+      </DialogContent>
     </Dialog>
   )
 }
