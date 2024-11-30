@@ -8,7 +8,7 @@ import { auth } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
-import { Home, ListTodo, Trophy, LogOut, Settings } from 'lucide-react'
+import { Home, ListTodo, Trophy, Settings, Star, ExternalLink } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +49,10 @@ export function Dashboard() {
     }
   }
 
+  const handleJoinCommunity = () => {
+    window.open('https://t.me/your_telegram_community', '_blank')
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 z-50 backdrop-blur-sm border-b border-muted/20 bg-background/60">
@@ -85,7 +89,7 @@ export function Dashboard() {
               <CardContent className="pt-6">
                 <div className="text-center space-y-2">
                   <Image
-                    src="/assets/logos/paw-logo.png"
+                    src="/assets/logos/swhit-logo.png"
                     alt="SWHIT Logo"
                     width={64}
                     height={64}
@@ -102,9 +106,9 @@ export function Dashboard() {
             <Button
               variant="outline"
               className="w-full justify-start text-left font-normal"
-              onClick={() => {}}
+              onClick={handleJoinCommunity}
             >
-              <Users className="mr-2 h-4 w-4" />
+              <ExternalLink className="mr-2 h-4 w-4" />
               Join our community
             </Button>
 
