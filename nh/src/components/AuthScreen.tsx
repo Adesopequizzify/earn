@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { SignUp } from './SignUp'
 import { Login } from './Login'
@@ -10,17 +10,6 @@ import { Card, CardContent } from './ui/card'
 
 export function AuthScreen() {
   const [isSignUp, setIsSignUp] = useState(false)
-  const [step, setStep] = useState(1)
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    username: ''
-  })
-
-  const handleStepComplete = (data: Partial<typeof formData>) => {
-    setFormData(prev => ({ ...prev, ...data }))
-    setStep(prev => prev + 1)
-  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background/95 p-4">
@@ -35,7 +24,7 @@ export function AuthScreen() {
             <div className="flex justify-center mb-6">
               <div className="relative w-16 h-16">
                 <Image
-                  src="/placeholder.svg?height=64&width=64"
+                  src="/logo.png"
                   alt="NH Logo"
                   width={64}
                   height={64}
@@ -46,26 +35,11 @@ export function AuthScreen() {
             <h1 className="text-2xl font-bold text-center text-primary">
               Welcome to NH
             </h1>
-            <AnimatePresence mode="wait">
-              {isSignUp ? (
-                <SignUp 
-                  key="signup"
-                  step={step}
-                  formData={formData}
-                  onStepComplete={handleStepComplete}
-                />
-              ) : (
-                <Login key="login" />
-              )}
-            </AnimatePresence>
+            {isSignUp ? <SignUp /> : <Login />}
             <div className="text-center">
               <Button 
                 variant="link" 
-                onClick={() => {
-                  setIsSignUp(!isSignUp)
-                  setStep(1)
-                  setFormData({ email: '', password: '', username: '' })
-                }}
+                onClick={() => setIsSignUp(!isSignUp)}
               >
                 {isSignUp ? "Already have an account? Log in" : "Don't have an account? Sign up"}
               </Button>
