@@ -1,58 +1,40 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import Image from "next/image"
+import { Trophy } from 'lucide-react'
 
-const leaderboardData = [
-  { username: "elkanadi", swhit: 838496259, rank: 1 },
-  { username: "BB9B9N", swhit: 152739901, rank: 2 },
-  { username: "imGet", swhit: 151059137, rank: 3 },
-  { username: "xaffizmedia", swhit: 117817858, rank: 4 },
-  { username: "Q700k", swhit: 102658327, rank: 5 },
-]
+// Empty leaderboard array - will be populated from Firestore later
+const leaderboardData: any[] = []
 
 export function Leaderboard() {
   return (
-    <Card>
+    <Card className="border-muted/20 bg-background/60 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>Leaderboard</span>
-          <Image
-            src="/assets/logos/trophy.png"
-            alt="Trophy"
-            width={24}
-            height={24}
-          />
+          <Trophy className="w-6 h-6" />
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
-          {leaderboardData.map((user, index) => (
-            <div key={user.username} className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Image
-                  src="/assets/logos/swhit-logo.jpg"
-                  alt="SWHIT Logo"
-                  width={24}
-                  height={24}
-                />
-                <span>{user.username}</span>
-              </div>
-              <div className="flex items-center space-x-2">
+        {leaderboardData.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No leaderboard data available
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {leaderboardData.map((user, index) => (
+              <div key={user.username} className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <span className={`text-lg ${index < 3 ? 'text-yellow-500' : ''}`}>
+                    #{index + 1}
+                  </span>
+                  <span>{user.username}</span>
+                </div>
                 <span>{user.swhit.toLocaleString()} SWHIT</span>
-                {index < 3 && (
-                  <Image
-                    src={`/assets/icons/medal-${index + 1}.png`}
-                    alt={`Rank ${index + 1}`}
-                    width={16}
-                    height={16}
-                  />
-                )}
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   )
 }
 
-                
