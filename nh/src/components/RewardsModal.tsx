@@ -1,16 +1,58 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Button } from "@/components/ui/button"
+import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import { useAuth } from '@/context/AuthContext'
+import * as Icons from 'lucide-react'
 
 interface RewardsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean
+  onClose: () => void
 }
 
-// Empty rewards array - will be populated from Firestore later
-const rewardsData: any[] = [];
+interface Reward {
+  id: string
+  description: string
+  amount: number
+  date: string
+  icon: string
+}
 
 export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
+  const [rewardsData, setRewardsData] = useState<Reward[]>([])
+  const { user } = useAuth()
+
+  useEffect(() => {
+    const fetchRewards = async () => {
+      if (user) {
+        const rewardsRef = collection(db, 'rewards')
+        const rewardsQuery = query(
+          rewardsRef,
+          where('userId', '==', user.uid),
+          orderBy('date', 'desc'),
+          limit(10)
+        )
+        const rewardsSnapshot = await getDocs(rewardsQuery)
+        const rewardsData = rewardsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Reward))
+        setRewardsData(rewardsData)
+      }
+    }
+
+    if (isOpen) {
+      fetchRewards()
+    }
+  }, [isOpen, user])
+
+  const renderIcon = (iconName: string) => {
+    const Icon = Icons[iconName as keyof typeof Icons]
+    return Icon ? <Icon className="w-6 h-6" /> : null
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -22,14 +64,14 @@ export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
             <div className="text-center py-8 text-muted-foreground">No rewards claimed yet</div>
           ) : (
             <div className="space-y-4">
-              {rewardsData.map((reward, index) => (
+              {rewardsData.map((reward) => (
                 <div
-                  key={index}
+                  key={reward.id}
                   className="flex items-center justify-between py-4 border-b last:border-b-0"
                 >
                   <div className="flex items-center space-x-3">
                     <div className="p-2 rounded-lg bg-primary/10">
-                      {/* Remove or replace undefined icon usage */}
+                      {renderIcon(reward.icon)}
                     </div>
                     <div>
                       <p>{reward.description}</p>
@@ -48,34 +90,12 @@ export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
         {rewardsData.length > 0 && (
           <div className="mt-4 flex justify-center">
             <Button variant="outline" onClick={onClose}>
-              Show more
+              Close
             </Button>
           </div>
         )}
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
-export function Rank() {
-  return (
-    <div className="border-muted/20 bg-background/60 backdrop-blur-sm p-4">
-      <h2 className="text-xl font-bold">SWHIT Ranks</h2>
-      <div className="space-y-6 mt-4">
-        <div className="flex items-center justify-between p-4 rounded-lg bg-card/50">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              {/* Remove undefined Trophy */}
-            </div>
-            <div>
-              <p className="font-medium">Legend</p>
-              <p className="text-sm text-muted-foreground">50,000+ SWHIT</p>
-            </div>
-          </div>
-          <div className="text-yellow-500">★★★★★</div>
-        </div>
-        {/* Add more ranks as necessary */}
-      </div>
-    </div>
-  );
-}
