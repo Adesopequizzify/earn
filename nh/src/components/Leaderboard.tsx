@@ -1,10 +1,36 @@
+"use client"
+
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Trophy } from 'lucide-react'
+import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 
-// Empty leaderboard array - will be populated from Firestore later
-const leaderboardData: any[] = []
+interface LeaderboardUser {
+  username: string
+  points: number
+  rank: string
+}
 
 export function Leaderboard() {
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardUser[]>([])
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      const usersRef = collection(db, 'users')
+      const leaderboardQuery = query(usersRef, orderBy('points', 'desc'), limit(10))
+      const leaderboardSnapshot = await getDocs(leaderboardQuery)
+      const leaderboardData = leaderboardSnapshot.docs.map(doc => ({
+        username: doc.data().username,
+        points: doc.data().points,
+        rank: doc.data().rank
+      }))
+      setLeaderboardData(leaderboardData)
+    }
+
+    fetchLeaderboard()
+  }, [])
+
   return (
     <Card className="border-muted/20 bg-background/60 backdrop-blur-sm">
       <CardHeader>
@@ -28,7 +54,10 @@ export function Leaderboard() {
                   </span>
                   <span>{user.username}</span>
                 </div>
-                <span>{user.swhit.toLocaleString()} SWHIT</span>
+                <div className="text-right">
+                  <span className="block">{user.points.toLocaleString()} SWHIT</span>
+                  <span className="text-sm text-muted-foreground">{user.rank}</span>
+                </div>
               </div>
             ))}
           </div>
