@@ -6,9 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { collection, query, where, getDocs, updateDoc, doc, setDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
-import { Loader2, Check, Zap } from 'lucide-react'
+import { Loader2, Check, Zap, Trophy, Users, Rocket, Activity, Target, Bookmark, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import Image from 'next/image'
 
 interface Task {
   id: string
@@ -21,6 +20,17 @@ interface Task {
 }
 
 type TaskStatus = 'idle' | 'checking' | 'claiming' | 'completed'
+
+const iconMap: { [key: string]: React.ElementType } = {
+  'zap': Zap,
+  'trophy': Trophy,
+  'users': Users,
+  'rocket': Rocket,
+  'activity': Activity,
+  'target': Target,
+  'bookmark': Bookmark,
+  'star': Star,
+}
 
 export function Tasks() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -192,14 +202,8 @@ export function Tasks() {
                         "w-12 h-12 rounded-xl flex items-center justify-center",
                         taskStatus[task.id] === 'completed' ? 'bg-green-500/20' : 'bg-white/10'
                       )}>
-                        {task.icon ? (
-                          <Image 
-                            src={task.icon.startsWith('/') ? task.icon : `/${task.icon}`}
-                            alt={task.name}
-                            width={24}
-                            height={24}
-                            className="w-6 h-6"
-                          />
+                        {iconMap[task.icon] ? (
+                          React.createElement(iconMap[task.icon], { className: "w-6 h-6 text-white" })
                         ) : (
                           <Zap className="w-6 h-6 text-white" />
                         )}
