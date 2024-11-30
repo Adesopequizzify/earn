@@ -3,7 +3,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { signInWithEmailAndPassword, AuthError } from 'firebase/auth'
+import { signInWithEmailAndPassword, FirebaseError } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
@@ -37,7 +37,7 @@ export function Login() {
         description: "Welcome back!",
       })
     } catch (error) {
-      const errorMessage = error instanceof AuthError 
+      const errorMessage = error instanceof FirebaseError 
         ? error.message 
         : "An unexpected error occurred. Please try again.";
       
