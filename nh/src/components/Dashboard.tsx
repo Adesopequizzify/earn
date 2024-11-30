@@ -19,7 +19,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { RewardsModal } from './RewardsModal'
 import { Tasks } from './Tasks'
 import { Leaderboard } from './Leaderboard'
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore'
+import { collection, query, orderBy, limit, getDocs, DocumentData } from 'firebase/firestore'
+
+interface Banner extends DocumentData {
+  id: string;
+  imageUrl: string;
+  createdAt: Date;
+}
 
 const tabs = [
   { id: 'home', label: 'Home', icon: Home },
@@ -30,7 +36,7 @@ const tabs = [
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState('home')
   const [showRewards, setShowRewards] = useState(false)
-  const [banners, setBanners] = useState([])
+  const [banners, setBanners] = useState<Banner[]>([])
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
   const { toast } = useToast()
   const { userData } = useAuth()
@@ -40,7 +46,7 @@ export function Dashboard() {
       const bannersRef = collection(db, 'banners')
       const bannersQuery = query(bannersRef, orderBy('createdAt', 'desc'), limit(5))
       const bannersSnapshot = await getDocs(bannersQuery)
-      const bannersData = bannersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      const bannersData = bannersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Banner))
       setBanners(bannersData)
     }
 
@@ -65,7 +71,7 @@ export function Dashboard() {
     } catch (error) {
       toast({
         title: "Error signing out",
-        description: error.message || "An unexpected error occurred.",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
         variant: "destructive",
       })
     }
@@ -197,3 +203,4 @@ export function Dashboard() {
     </div>
   )
 }
+
