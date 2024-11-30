@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import Image from 'next/image'
+import { cn } from '@/lib/utils'
 
 interface LeaderboardUser {
   username: string
@@ -70,13 +71,23 @@ export function Leaderboard() {
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-                <Image
-                  src="/assets/logos/main.png"
-                  alt="SWHIT Logo"
-                  width={24}
-                  height={24}
-                  className="w-6 h-6"
-                />
+                {user.avatar ? (
+                  <Image
+                    src={user.avatar.startsWith('/') ? user.avatar : `/${user.avatar}`}
+                    alt={`${user.username}'s avatar`}
+                    width={24}
+                    height={24}
+                    className="w-6 h-6 rounded-full"
+                  />
+                ) : (
+                  <Image
+                    src="/assets/logos/main.png"
+                    alt="SWHIT Logo"
+                    width={24}
+                    height={24}
+                    className="w-6 h-6"
+                  />
+                )}
               </div>
               <div>
                 <div className="text-white font-medium">{user.username}</div>
@@ -104,3 +115,4 @@ export function Leaderboard() {
     </div>
   )
 }
+
