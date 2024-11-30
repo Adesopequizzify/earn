@@ -17,7 +17,7 @@ interface Reward {
   description: string
   amount: number
   date: string
-  icon: string
+  icon: keyof typeof Icons
 }
 
 export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
@@ -48,8 +48,8 @@ export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
     }
   }, [isOpen, user])
 
-  const renderIcon = (iconName: string) => {
-    const Icon = Icons[iconName as keyof typeof Icons]
+  const renderIcon = (iconName: keyof typeof Icons) => {
+    const Icon = Icons[iconName]
     return Icon ? <Icon className="w-6 h-6" /> : null
   }
 
@@ -75,7 +75,7 @@ export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
                     </div>
                     <div>
                       <p>{reward.description}</p>
-                      <p className="text-sm text-muted-foreground">{reward.date}</p>
+                      <p className="text-sm text-muted-foreground">{new Date(reward.date).toLocaleDateString()}</p>
                     </div>
                   </div>
                   <div className="flex flex-col items-end">
@@ -87,13 +87,11 @@ export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
             </div>
           )}
         </ScrollArea>
-        {rewardsData.length > 0 && (
-          <div className="mt-4 flex justify-center">
-            <Button variant="outline" onClick={onClose}>
-              Close
-            </Button>
-          </div>
-        )}
+        <div className="mt-4 flex justify-center">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   )
