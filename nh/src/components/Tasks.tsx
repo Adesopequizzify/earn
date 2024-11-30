@@ -6,8 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { collection, query, where, getDocs, updateDoc, doc, setDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
-import { Loader2, Check, Users, Zap } from 'lucide-react'
+import { Loader2, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import Image from 'next/image'
 
 interface Task {
   id: string
@@ -39,7 +40,6 @@ export function Tasks() {
         } as Task))
         setTasks(tasksData)
         
-        // Initialize task statuses
         const initialStatuses: Record<string, TaskStatus> = {}
         tasksData.forEach(task => {
           initialStatuses[task.id] = task.completed ? 'completed' : 'idle'
@@ -59,26 +59,22 @@ export function Tasks() {
     if (!user || taskStatus[task.id] === 'completed') return
 
     if (taskStatus[task.id] === 'idle') {
-      // Start task
       if (task.link) {
         window.open(task.link, '_blank')
       }
       setTaskStatus(prev => ({ ...prev, [task.id]: 'checking' }))
       
-      // Simulate verification (5 seconds)
       setTimeout(() => {
         setTaskStatus(prev => ({ ...prev, [task.id]: 'claiming' }))
       }, 5000)
     } else if (taskStatus[task.id] === 'claiming') {
       try {
-        // Update user's points
         const userRef = doc(db, 'users', user.uid)
         await updateDoc(userRef, {
           points: (userData?.points || 0) + task.reward,
           completedTasks: [...(userData?.completedTasks || []), task.id]
         })
 
-        // Add to rewards history
         const rewardRef = doc(collection(db, 'rewards'))
         await setDoc(rewardRef, {
           userId: user.uid,
@@ -135,16 +131,18 @@ export function Tasks() {
     )
   }
 
-  const getTaskIcon = (iconName: string) => {
-    switch (iconName) {
-      case 'users': return <Users className="w-6 h-6" />
-      case 'zap': return <Zap className="w-6 h-6" />
-      default: return <div className="w-6 h-6">🐾</div>
-    }
-  }
-
   return (
-    <div className="bg-black/95 p-4 rounded-xl">
+    <div className="bg-black/95 p-4 rounded-xl space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-4xl font-bold text-white">TASKS</h1>
+        <div>
+          <span className="text-2xl font-light text-white">GET REWARDS </span>
+          <span className="text-2xl font-light text-gray-500">FOR</span>
+          <br />
+          <span className="text-2xl font-light text-gray-500">COMPLETING QUESTS</span>
+        </div>
+      </div>
+
       <Tabs defaultValue="in-game">
         <TabsList className="w-full grid grid-cols-3 bg-transparent border-b border-white/10 mb-4">
           <TabsTrigger 
@@ -194,12 +192,18 @@ export function Tasks() {
                         "w-12 h-12 rounded-xl flex items-center justify-center",
                         taskStatus[task.id] === 'completed' ? 'bg-green-500/20' : 'bg-white/10'
                       )}>
-                        {getTaskIcon(task.icon)}
+                        <Image 
+                          src={task.icon} 
+                          alt={task.name}
+                          width={24}
+                          height={24}
+                          className="w-6 h-6"
+                        />
                       </div>
                       <div>
                         <div className="text-white font-medium">{task.name}</div>
                         <div className="text-white/60 text-sm">
-                          +{task.reward.toLocaleString()} PAWS
+                          +{task.reward.toLocaleString()} SWHIT
                         </div>
                       </div>
                     </div>
