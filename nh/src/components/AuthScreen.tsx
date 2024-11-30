@@ -33,7 +33,7 @@ export function AuthScreen() {
               </div>
             </div>
             <h1 className="text-2xl font-bold text-center text-primary">
-              Welcome to NH
+              Welcome to WheatChain
             </h1>
             {isSignUp ? <SignUp /> : <Login />}
             <div className="text-center">
