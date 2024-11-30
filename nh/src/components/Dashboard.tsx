@@ -8,7 +8,7 @@ import { auth, db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
-import { Home, ListTodo, Trophy, Settings, Star, ExternalLink } from 'lucide-react'
+import { Home, ListTodo, Trophy, Settings, Star, ExternalLink, Users } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +19,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { RewardsModal } from './RewardsModal'
 import { Tasks } from './Tasks'
 import { Leaderboard } from './Leaderboard'
+import { Friends } from './Friends'
 import { collection, query, orderBy, limit, getDocs, DocumentData } from 'firebase/firestore'
 
 interface Banner extends DocumentData {
@@ -31,6 +32,7 @@ const tabs = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'tasks', label: 'Tasks', icon: ListTodo },
   { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
+  { id: 'friends', label: 'Friends', icon: Users },
 ]
 
 export function Dashboard() {
@@ -172,6 +174,7 @@ export function Dashboard() {
 
         {activeTab === 'tasks' && <Tasks />}
         {activeTab === 'leaderboard' && <Leaderboard />}
+        {activeTab === 'friends' && <Friends />}
       </main>
 
       <nav className="sticky bottom-0 left-0 right-0 p-4 backdrop-blur-sm bg-background/60 border-t border-muted/20">
