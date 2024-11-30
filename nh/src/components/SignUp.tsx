@@ -7,10 +7,10 @@ import * as z from 'zod'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
 import { auth, createUserDocument, sendVerificationEmail } from '@/lib/firebase'
-import { Button } from '@/components/ui/button'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { useToast } from '@/components/ui/use-toast'
+import { Button } from './ui/button'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form'
+import { Input } from './ui/input'
+import { useToast } from './ui/use-toast'
 
 const formSchema = z.object({
   username: z.string().min(3, {
@@ -22,6 +22,7 @@ const formSchema = z.object({
   password: z.string().min(6, {
     message: "Password must be at least 6 characters.",
   }),
+  referralCode: z.string().optional(),
 })
 
 export function SignUp() {
@@ -33,6 +34,7 @@ export function SignUp() {
       username: "",
       email: "",
       password: "",
+      referralCode: "",
     },
   })
 
@@ -40,7 +42,7 @@ export function SignUp() {
     setIsLoading(true)
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password)
-      await createUserDocument(userCredential.user, values.username)
+      await createUserDocument(userCredential.user, values.username, values.referralCode)
       await sendVerificationEmail(userCredential.user)
       toast({
         title: "Account created successfully",
@@ -56,6 +58,8 @@ export function SignUp() {
         description: errorMessage,
         variant: "destructive",
       })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -96,6 +100,19 @@ export function SignUp() {
               <FormLabel>Password</FormLabel>
               <FormControl>
                 <Input type="password" placeholder="Create a password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="referralCode"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Referral Code (Optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter referral code" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
