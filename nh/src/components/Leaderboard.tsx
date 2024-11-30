@@ -29,7 +29,7 @@ export function Leaderboard() {
             <div key={user.username} className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Image
-                  src="/assets/logos/paw-logo.png"
+                  src="/assets/logos/swhit-logo.jpg"
                   alt="SWHIT Logo"
                   width={24}
                   height={24}
