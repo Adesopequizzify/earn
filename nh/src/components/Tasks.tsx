@@ -1,22 +1,45 @@
 "use client"
 
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Users, MessageCircle, Twitter, Zap } from 'lucide-react'
+import { collection, query, where, getDocs } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import * as Icons from 'lucide-react'
 
-// Empty tasks array - will be populated from Firestore later
-const tasks: any[] = []
-
-// Example task structure for reference
-// const tasks = [
-//   { id: 1, name: "Invite 10 friends", reward: 5000, icon: Users },
-//   { id: 2, name: "Join Telegram", reward: 6000, icon: MessageCircle },
-//   { id: 3, name: "Follow on Twitter", reward: 2500, icon: Twitter },
-//   { id: 4, name: "Complete tutorial", reward: 250, icon: Zap },
-// ]
+interface Task {
+  id: string
+  name: string
+  reward: number
+  icon: string
+  type: 'limited' | 'in-game' | 'partners'
+  link: string
+}
 
 export function Tasks() {
+  const [tasks, setTasks] = useState<Task[]>([])
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const tasksRef = collection(db, 'tasks')
+      const tasksQuery = query(tasksRef, where('active', '==', true))
+      const tasksSnapshot = await getDocs(tasksQuery)
+      const tasksData = tasksSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Task))
+      setTasks(tasksData)
+    }
+
+    fetchTasks()
+  }, [])
+
+  const renderIcon = (iconName: string) => {
+    const Icon = Icons[iconName as keyof typeof Icons]
+    return Icon ? <Icon className="w-6 h-6" /> : null
+  }
+
   return (
     <Card className="bg-background/60 backdrop-blur-sm border-muted/20">
       <CardHeader>
@@ -36,25 +59,24 @@ export function Tasks() {
             <TabsTrigger value="in-game">
               In-game
               <span className="ml-1 text-xs rounded-full bg-primary/10 px-2">
-                {tasks.length}
+                {tasks.filter(task => task.type === 'in-game').length}
               </span>
             </TabsTrigger>
             <TabsTrigger value="partners">Partners</TabsTrigger>
           </TabsList>
-          <TabsContent value="in-game" className="mt-4">
-            {tasks.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No tasks available at the moment
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {tasks.map((task) => {
-                  const Icon = task.icon
-                  return (
+          {['limited','in-game', 'partners'].map(tabValue => (
+            <TabsContent key={tabValue} value={tabValue} className="mt-4">
+              {tasks.filter(task => task.type === tabValue).length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No {tabValue} tasks available at the moment
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {tasks.filter(task => task.type === tabValue).map((task) => (
                     <div key={task.id} className="flex items-center justify-between p-4 rounded-lg bg-card/50">
                       <div className="flex items-center space-x-3">
                         <div className="p-2 rounded-lg bg-primary/10">
-                          <Icon className="w-6 h-6" />
+                          {renderIcon(task.icon)}
                         </div>
                         <span>{task.name}</span>
                       </div>
@@ -62,30 +84,16 @@ export function Tasks() {
                         <span className="text-sm text-muted-foreground">
                           +{task.reward.toLocaleString()} SWHIT
                         </span>
-                        {task.completed ? (
-                          <span className="text-green-500">✓</span>
-                        ) : (
-                          <Button size="sm" variant="secondary">
-                            Start
-                          </Button>
-                        )}
+                        <Button size="sm" variant="secondary" onClick={() => window.open(task.link, '_blank')}>
+                          Start
+                        </Button>
                       </div>
                     </div>
-                  )
-                })}
-              </div>
-            )}
-          </TabsContent>
-          <TabsContent value="limited">
-            <div className="text-center py-8 text-muted-foreground">
-              No limited tasks available
-            </div>
-          </TabsContent>
-          <TabsContent value="partners">
-            <div className="text-center py-8 text-muted-foreground">
-              No partner tasks available
-            </div>
-          </TabsContent>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          ))}
         </Tabs>
       </CardContent>
     </Card>
