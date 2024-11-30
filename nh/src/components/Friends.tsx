@@ -15,13 +15,18 @@ export function Friends() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { toast } = useToast()
 
+  const getReferralLink = () => {
+    return `${window.location.origin}/signup?referral=${userData?.referralCode}`
+  }
+
   const handleShare = async () => {
+    const referralLink = getReferralLink()
     if (navigator.share) {
       try {
         await navigator.share({
           title: 'Join WheatChain',
           text: 'Use my referral code to join WheatChain and earn rewards!',
-          url: `https://swhit-g.vercel.app/signup?referral=${userData?.referralCode}`,
+          url: referralLink,
         })
       } catch (error) {
         console.error('Error sharing:', error)
@@ -32,7 +37,7 @@ export function Friends() {
   }
 
   const handleCopyLink = () => {
-    const referralLink = `https://swhit-g.vercel.app/signup?referral=${userData?.referralCode}`
+    const referralLink = getReferralLink()
     navigator.clipboard.writeText(referralLink).then(() => {
       toast({
         title: "Link copied",
