@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
 import { getAuth, sendEmailVerification, User, reload } from 'firebase/auth'
-import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore'
+import { getFirestore, doc, setDoc, getDoc, updateDoc, increment, collection, query, where, getDocs, addDoc } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -17,7 +17,7 @@ const db = getFirestore(app)
 
 export { app, auth, db }
 
-export const createUserDocument = async (user: User, username: string) => {
+export const createUserDocument = async (user: User, username: string, referralCode?: string) => {
   if (!user) return
 
   const userRef = doc(db, 'users', user.uid)
@@ -25,18 +25,57 @@ export const createUserDocument = async (user: User, username: string) => {
 
   if (!snapshot.exists()) {
     const { email } = user
+    const newUserData = {
+      username,
+      email,
+      points: 1500,
+      rank: 'NOVICE',
+      createdAt: new Date(),
+      emailVerified: false,
+      referralCode: generateReferralCode(),
+    }
+
     try {
-      await setDoc(userRef, {
-        username,
-        email,
-        points: 2500,
-        rank: 'NOVICE',
-        createdAt: new Date(),
-        emailVerified: false,
-      })
+      await setDoc(userRef, newUserData)
+
+      if (referralCode) {
+        await handleReferral(referralCode, user.uid)
+      }
     } catch (error) {
       console.error("Error creating user document", error)
     }
+  }
+}
+
+const generateReferralCode = () => {
+  return Math.random().toString(36).substring(2, 8).toUpperCase()
+}
+
+const handleReferral = async (referralCode: string, newUserId: string) => {
+  const usersRef = collection(db, 'users')
+  const q = query(usersRef, where('referralCode', '==', referralCode))
+  const querySnapshot = await getDocs(q)
+
+  if (!querySnapshot.empty) {
+    const referrerDoc = querySnapshot.docs[0]
+    const referrerId = referrerDoc.id
+
+    // Update referrer's points
+    await updateDoc(doc(db, 'users', referrerId), {
+      points: increment(2500)
+    })
+
+    // Update new user's points
+    await updateDoc(doc(db, 'users', newUserId), {
+      points: increment(1500)
+    })
+
+    // Add to referrals collection
+    await addDoc(collection(db, 'referrals'), {
+      referrerId,
+      referredId: newUserId,
+      date: new Date()
+    })
   }
 }
 
