@@ -7,7 +7,6 @@ import { signOut } from 'firebase/auth'
 import { auth, db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
-import { useToast } from '@/components/ui/use-toast'
 import { useToast } from "@/hooks/use-toast"
 import { Home, ListTodo, Trophy, Settings, Star, ExternalLink, Users } from 'lucide-react'
 import {
