@@ -1,18 +1,24 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { SignUp } from './SignUp'
 import { Login } from './Login'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
+import { useSearchParams } from 'next/navigation'
 
 export function AuthScreen() {
   const [isSignUp, setIsSignUp] = useState(false)
+  const searchParams = useSearchParams()
+  const referralCode = searchParams.get('referral')
 
-  // Create a dummy Promise that resolves to undefined for the referral code
-  const dummyReferralCodePromise = Promise.resolve(undefined)
+  useEffect(() => {
+    if (referralCode) {
+      setIsSignUp(true)
+    }
+  }, [referralCode])
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background/95 p-4">
@@ -38,7 +44,7 @@ export function AuthScreen() {
             <h1 className="text-2xl font-bold text-center text-primary">
               Welcome to WheatChain
             </h1>
-            {isSignUp ? <SignUp referralCodePromise={dummyReferralCodePromise} /> : <Login />}
+            {isSignUp ? <SignUp initialReferralCode={referralCode || undefined} /> : <Login />}
             <div className="text-center">
               <Button 
                 variant="link" 
@@ -53,3 +59,4 @@ export function AuthScreen() {
     </div>
   )
 }
+
