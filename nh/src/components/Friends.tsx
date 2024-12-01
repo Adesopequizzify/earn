@@ -8,7 +8,7 @@ import { Card, CardContent } from './ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { useAuth } from '@/context/AuthContext'
 import { Share, Copy, Link } from 'lucide-react'
-import { useToast } from './ui/use-toast'
+import { useToast } from "@/hooks/use-toast"
 
 export function Friends() {
   const { userData } = useAuth()
