@@ -26,10 +26,10 @@ const formSchema = z.object({
 })
 
 interface SignUpProps {
-  referralCodePromise: Promise<string | undefined>;
+  initialReferralCode?: string;
 }
 
-export function SignUp({ referralCodePromise }: SignUpProps) {
+export function SignUp({ initialReferralCode }: SignUpProps) {
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const form = useForm<z.infer<typeof formSchema>>({
@@ -38,17 +38,15 @@ export function SignUp({ referralCodePromise }: SignUpProps) {
       username: "",
       email: "",
       password: "",
-      referralCode: "",
+      referralCode: initialReferralCode || "",
     },
   })
 
   useEffect(() => {
-    referralCodePromise.then(referralCode => {
-      if (referralCode) {
-        form.setValue('referralCode', referralCode)
-      }
-    })
-  }, [referralCodePromise, form])
+    if (initialReferralCode) {
+      form.setValue('referralCode', initialReferralCode)
+    }
+  }, [initialReferralCode, form])
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
