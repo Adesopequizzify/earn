@@ -79,7 +79,7 @@ export function Friends() {
           >
             <h2 className="text-2xl font-bold text-center text-primary">Invite Friends</h2>
             <p className="text-center text-muted-foreground">
-              SHARE YOUR INVITATION LINK & GET 10% OF FRIEND'S POINTS
+              SHARE YOUR INVITATION CODE & GET 10% OF FRIEND'S POINTS
             </p>
             <div className="flex justify-center">
               <Image
