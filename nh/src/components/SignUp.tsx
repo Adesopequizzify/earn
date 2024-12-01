@@ -10,7 +10,7 @@ import { auth, createUserDocument, sendVerificationEmail } from '@/lib/firebase'
 import { Button } from './ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form'
 import { Input } from './ui/input'
-import { useToast } from './ui/use-toast'
+import { useToast } from "@/hooks/use-toast"
 
 const formSchema = z.object({
   username: z.string().min(3, {
