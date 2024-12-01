@@ -7,7 +7,7 @@ import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { useAuth } from '@/context/AuthContext'
-import { Share, Copy } from 'lucide-react'
+import { Share, Copy, Link } from 'lucide-react'
 import { useToast } from './ui/use-toast'
 
 export function Friends() {
@@ -46,6 +46,25 @@ export function Friends() {
     }, (err) => {
       console.error('Could not copy text: ', err)
     })
+  }
+
+  const handleCopyCode = () => {
+    if (userData?.referralCode) {
+      navigator.clipboard.writeText(userData.referralCode).then(() => {
+        toast({
+          title: "Code copied",
+          description: "Referral code copied to clipboard!",
+        })
+      }, (err) => {
+        console.error('Could not copy text: ', err)
+      })
+    } else {
+      toast({
+        title: "Error",
+        description: "Referral code not available.",
+        variant: "destructive",
+      })
+    }
   }
 
   return (
@@ -92,8 +111,12 @@ export function Friends() {
               Share
             </Button>
             <Button onClick={handleCopyLink} className="w-full flex items-center justify-start">
-              <Copy className="mr-2 h-4 w-4" />
+              <Link className="mr-2 h-4 w-4" />
               Copy Link
+            </Button>
+            <Button onClick={handleCopyCode} className="w-full flex items-center justify-start">
+              <Copy className="mr-2 h-4 w-4" />
+              Copy Referral Code
             </Button>
           </div>
         </DialogContent>
