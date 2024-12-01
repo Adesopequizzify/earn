@@ -26,10 +26,10 @@ const formSchema = z.object({
 })
 
 interface SignUpProps {
-  defaultReferralCode?: string | null
+  initialReferralCode?: string;
 }
 
-export function SignUp({ defaultReferralCode }: SignUpProps) {
+export function SignUp({ initialReferralCode }: SignUpProps) {
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const form = useForm<z.infer<typeof formSchema>>({
@@ -38,7 +38,7 @@ export function SignUp({ defaultReferralCode }: SignUpProps) {
       username: "",
       email: "",
       password: "",
-      referralCode: defaultReferralCode || "",
+      referralCode: initialReferralCode || "",
     },
   })
 
@@ -114,7 +114,7 @@ export function SignUp({ defaultReferralCode }: SignUpProps) {
           name="referralCode"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Referral Code {defaultReferralCode ? '(Pre-filled)' : '(Optional)'}</FormLabel>
+              <FormLabel>Referral Code (Optional)</FormLabel>
               <FormControl>
                 <Input placeholder="Enter referral code" {...field} />
               </FormControl>
