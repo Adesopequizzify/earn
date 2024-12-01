@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { sendVerificationEmail, checkEmailVerification } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
-import { useToast } from '@/components/ui/use-toast'
+import { useToast } from "@/hooks/use-toast"
 
 export function EmailVerification() {
   const { user, refreshEmailVerification } = useAuth()
