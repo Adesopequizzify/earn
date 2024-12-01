@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -26,10 +26,10 @@ const formSchema = z.object({
 })
 
 interface SignUpProps {
-  initialReferralCode?: string;
+  defaultReferralCode?: string | null
 }
 
-export function SignUp({ initialReferralCode }: SignUpProps) {
+export function SignUp({ defaultReferralCode }: SignUpProps) {
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const form = useForm<z.infer<typeof formSchema>>({
@@ -38,15 +38,9 @@ export function SignUp({ initialReferralCode }: SignUpProps) {
       username: "",
       email: "",
       password: "",
-      referralCode: initialReferralCode || "",
+      referralCode: defaultReferralCode || "",
     },
   })
-
-  useEffect(() => {
-    if (initialReferralCode) {
-      form.setValue('referralCode', initialReferralCode)
-    }
-  }, [initialReferralCode, form])
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
@@ -120,7 +114,7 @@ export function SignUp({ initialReferralCode }: SignUpProps) {
           name="referralCode"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Referral Code (Optional)</FormLabel>
+              <FormLabel>Referral Code {defaultReferralCode ? '(Pre-filled)' : '(Optional)'}</FormLabel>
               <FormControl>
                 <Input placeholder="Enter referral code" {...field} />
               </FormControl>
