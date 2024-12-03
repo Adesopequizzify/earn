@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { useAuth } from '@/context/AuthContext'
+import { Button } from '@/components/ui/button'
+import { showTelegramAlert } from '@/lib/telegram'
 
 export function SplashScreen() {
-  const { loading, user } = useAuth()
+  const { loading, user, error } = useAuth()
   const [status, setStatus] = useState('Initializing...')
 
   useEffect(() => {
@@ -12,10 +14,15 @@ export function SplashScreen() {
       setStatus('Connecting to Telegram...')
     } else if (user) {
       setStatus('Loading your profile...')
-    } else {
+    } else if (error) {
       setStatus('Unable to connect. Please try again.')
+      showTelegramAlert(error)
     }
-  }, [loading, user])
+  }, [loading, user, error])
+
+  const handleRetry = () => {
+    window.location.reload()
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background">
@@ -34,6 +41,17 @@ export function SplashScreen() {
       >
         {status}
       </motion.h1>
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7, duration: 0.5 }}
+        >
+          <Button onClick={handleRetry} className="mt-4">
+            Retry
+          </Button>
+        </motion.div>
+      )}
     </div>
   )
 }
