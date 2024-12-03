@@ -28,7 +28,7 @@ export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
         const rewardsRef = collection(db, 'rewards')
         const rewardsQuery = query(
           rewardsRef,
-          where('userId', '==', user.uid),
+          where('userId', '==', user.id),
           orderBy('date', 'desc'),
           limit(10)
         )
@@ -45,7 +45,6 @@ export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
       fetchRewards()
     }
   }, [isOpen, user])
-
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
