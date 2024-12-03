@@ -2,9 +2,9 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { getTelegramUser, initializeTelegramWebApp } from '@/lib/telegram'
-import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc, increment, writeBatch } from 'firebase/firestore'
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import { processReferral, processPendingReferrals } from '@/lib/referralSystem'
+import { checkPendingReferrals } from '@/lib/referralSystem'
 
 interface TelegramUser {
   id: number;
@@ -77,6 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userSnap = await getDoc(userRef)
 
       if (!userSnap.exists()) {
+        console.log('Creating new user:', telegramUser.id);
         const newUserData: UserData = {
           telegramId: telegramUser.id.toString(),
           username: telegramUser.username,
@@ -92,9 +93,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await setDoc(userRef, newUserData)
         setUserData(newUserData)
 
-        // Check for pending referrals
+        // Check for pending referrals immediately after creating new user
+        console.log('Checking pending referrals for new user');
         await checkPendingReferrals(telegramUser.id.toString())
       } else {
+        console.log('Updating existing user:', telegramUser.id);
         const existingUserData = userSnap.data() as UserData
         const updatedUserData = {
           ...existingUserData,
@@ -103,130 +106,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         await setDoc(userRef, updatedUserData, { merge: true })
         setUserData(updatedUserData)
+
+        // If user doesn't have referredBy set, check for pending referrals
+        if (!existingUserData.referredBy) {
+          console.log('Checking pending referrals for existing user without referral');
+          await checkPendingReferrals(telegramUser.id.toString())
+        }
       }
     } catch (err) {
-      setError('Failed to create or update user data')
       console.error('Error in createOrUpdateUser:', err)
-    }
-  }
-
-  const checkPendingReferrals = async (userId: string) => {
-    const pendingReferralsRef = collection(db, 'pendingReferrals')
-    const q = query(pendingReferralsRef, where('chatId', '==', userId), where('processed', '==', false))
-    const querySnapshot = await getDocs(q)
-
-    for (const doc of querySnapshot.docs) {
-      const data = doc.data()
-      await processReferral(userId, data.referralCode)
-    }
-  }
-
-  const processReferral = async (newUserId: string, referralCode: string) => {
-    try {
-      // First, verify the referral code exists and hasn't been used
-      const usersRef = collection(db, 'users')
-      const q = query(usersRef, where('referralCode', '==', referralCode))
-      const querySnapshot = await getDocs(q)
-
-      if (querySnapshot.empty) {
-        console.log('Invalid referral code:', referralCode)
-        return
-      }
-
-      const referrerDoc = querySnapshot.docs[0]
-      const referrerId = referrerDoc.id
-      const referrerData = referrerDoc.data() as UserData
-
-      // Verify this isn't a self-referral
-      if (referrerId === newUserId) {
-        console.log('Self-referral not allowed')
-        return
-      }
-
-      // Check if the new user has already been referred
-      const newUserRef = doc(db, 'users', newUserId)
-      const newUserSnap = await getDoc(newUserRef)
-
-      if (!newUserSnap.exists()) {
-        console.log('New user document not found')
-        return
-      }
-
-      const newUserData = newUserSnap.data() as UserData
-      if (newUserData.referredBy) {
-        console.log('User has already been referred')
-        return
-      }
-
-      // Start the batch write
-      const batch = writeBatch(db)
-
-      // 1. Update referrer's points
-      batch.update(doc(db, 'users', referrerId), {
-        points: increment(2500)
-      })
-
-      // 2. Update new user's points and referredBy
-      batch.update(newUserRef, {
-        points: increment(1500),
-        referredBy: referrerId
-      })
-
-      // 3. Create referral record
-      const referralRef = doc(collection(db, 'referrals'))
-      batch.set(referralRef, {
-        referrerId,
-        referredId: newUserId,
-        date: new Date().toISOString(),
-        processed: true
-      })
-
-      // 4. Create reward records
-      const referrerRewardRef = doc(collection(db, 'rewards'))
-      batch.set(referrerRewardRef, {
-        userId: referrerId,
-        amount: 2500,
-        type: 'referral',
-        description: `Referral bonus for inviting user ${newUserId}`,
-        date: new Date().toISOString()
-      })
-
-      const newUserRewardRef = doc(collection(db, 'rewards'))
-      batch.set(newUserRewardRef, {
-        userId: newUserId,
-        amount: 1500,
-        type: 'welcome',
-        description: `Welcome bonus from referral by ${referrerData.username}`,
-        date: new Date().toISOString()
-      })
-
-      // Commit the batch
-      await batch.commit()
-
-      // After successful batch commit, update the pending referral
-      const pendingReferralsRef = collection(db, 'pendingReferrals')
-      const pendingQuery = query(pendingReferralsRef,
-        where('chatId', '==', newUserId),
-        where('referralCode', '==', referralCode)
-      )
-      const pendingSnapshot = await getDocs(pendingQuery)
-
-      if (!pendingSnapshot.empty) {
-        const pendingDoc = pendingSnapshot.docs[0]
-        await updateDoc(pendingDoc.ref, {
-          processed: true,
-          processedAt: new Date().toISOString()
-        })
-      }
-
-      console.log('Referral processed successfully')
-
-      // Refresh the user data to reflect new points
-      await refreshUserData()
-
-    } catch (error) {
-      console.error('Error processing referral:', error)
-      throw error
+      setError('Failed to create or update user data')
     }
   }
 
@@ -242,8 +131,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setError('Telegram Web App data not available')
         }
       } catch (err) {
-        setError('Failed to initialize authentication')
         console.error('Error in initAuth:', err)
+        setError('Failed to initialize authentication')
       } finally {
         setLoading(false)
       }
