@@ -128,66 +128,107 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const processReferral = async (newUserId: string, referralCode: string) => {
     try {
+      // First, verify the referral code exists and hasn't been used
       const usersRef = collection(db, 'users')
       const q = query(usersRef, where('referralCode', '==', referralCode))
       const querySnapshot = await getDocs(q)
 
-      if (!querySnapshot.empty) {
-        const referrerDoc = querySnapshot.docs[0]
-        const referrerId = referrerDoc.id
-        const referrerData = referrerDoc.data() as UserData
-        const referrerUsername = referrerData.username
-
-        // Batch write to ensure all operations succeed or fail together
-        const batch = writeBatch(db)
-
-        // Update referrer's points
-        const referrerRef = doc(db, 'users', referrerId)
-        batch.update(referrerRef, {
-          points: increment(2500)
-        })
-
-        // Add referral reward record
-        const referrerRewardRef = doc(collection(db, 'rewards'))
-        batch.set(referrerRewardRef, {
-          userId: referrerId,
-          amount: 2500,
-          description: `Referral bonus for inviting user ${newUserId}`,
-          date: new Date().toISOString(),
-          type: 'referral'
-        })
-
-        // Update new user's points and set referredBy
-        const newUserRef = doc(db, 'users', newUserId)
-        batch.update(newUserRef, {
-          points: increment(1500),
-          referredBy: referrerId
-        })
-
-        // Add new user's welcome bonus record
-        const newUserRewardRef = doc(collection(db, 'rewards'))
-        batch.set(newUserRewardRef, {
-          userId: newUserId,
-          amount: 1500,
-          description: `Welcome bonus from referral by ${referrerUsername}`,
-          date: new Date().toISOString(),
-          type: 'welcome'
-        })
-
-        // Add to referrals collection
-        const referralRef = doc(collection(db, 'referrals'))
-        batch.set(referralRef, {
-          referrerId,
-          referredId: newUserId,
-          date: new Date().toISOString(),
-          processed: true
-        })
-
-        // Commit the batch
-        await batch.commit()
-
-        console.log('Referral processed successfully')
+      if (querySnapshot.empty) {
+        console.log('Invalid referral code:', referralCode)
+        return
       }
+
+      const referrerDoc = querySnapshot.docs[0]
+      const referrerId = referrerDoc.id
+      const referrerData = referrerDoc.data() as UserData
+
+      // Verify this isn't a self-referral
+      if (referrerId === newUserId) {
+        console.log('Self-referral not allowed')
+        return
+      }
+
+      // Check if the new user has already been referred
+      const newUserRef = doc(db, 'users', newUserId)
+      const newUserSnap = await getDoc(newUserRef)
+
+      if (!newUserSnap.exists()) {
+        console.log('New user document not found')
+        return
+      }
+
+      const newUserData = newUserSnap.data() as UserData
+      if (newUserData.referredBy) {
+        console.log('User has already been referred')
+        return
+      }
+
+      // Start the batch write
+      const batch = writeBatch(db)
+
+      // 1. Update referrer's points
+      batch.update(doc(db, 'users', referrerId), {
+        points: increment(2500)
+      })
+
+      // 2. Update new user's points and referredBy
+      batch.update(newUserRef, {
+        points: increment(1500),
+        referredBy: referrerId
+      })
+
+      // 3. Create referral record
+      const referralRef = doc(collection(db, 'referrals'))
+      batch.set(referralRef, {
+        referrerId,
+        referredId: newUserId,
+        date: new Date().toISOString(),
+        processed: true
+      })
+
+      // 4. Create reward records
+      const referrerRewardRef = doc(collection(db, 'rewards'))
+      batch.set(referrerRewardRef, {
+        userId: referrerId,
+        amount: 2500,
+        type: 'referral',
+        description: `Referral bonus for inviting user ${newUserId}`,
+        date: new Date().toISOString()
+      })
+
+      const newUserRewardRef = doc(collection(db, 'rewards'))
+      batch.set(newUserRewardRef, {
+        userId: newUserId,
+        amount: 1500,
+        type: 'welcome',
+        description: `Welcome bonus from referral by ${referrerData.username}`,
+        date: new Date().toISOString()
+      })
+
+      // Commit the batch
+      await batch.commit()
+
+      // After successful batch commit, update the pending referral
+      const pendingReferralsRef = collection(db, 'pendingReferrals')
+      const pendingQuery = query(pendingReferralsRef,
+        where('chatId', '==', newUserId),
+        where('referralCode', '==', referralCode)
+      )
+      const pendingSnapshot = await getDocs(pendingQuery)
+
+      if (!pendingSnapshot.empty) {
+        const pendingDoc = pendingSnapshot.docs[0]
+        await updateDoc(pendingDoc.ref, {
+          processed: true,
+          processedAt: new Date().toISOString()
+        })
+      }
+
+      console.log('Referral processed successfully')
+
+      // Refresh the user data to reflect new points
+      await refreshUserData()
+
     } catch (error) {
       console.error('Error processing referral:', error)
       throw error
