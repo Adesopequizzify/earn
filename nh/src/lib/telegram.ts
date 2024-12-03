@@ -5,6 +5,8 @@ declare global {
         ready: () => void;
         close: () => void;
         showAlert: (message: string) => void;
+        openTelegramLink: (url: string) => void;
+        readTextFromClipboard: (text: string) => void;
         initDataUnsafe: {
           user?: {
             id: number;
@@ -13,6 +15,7 @@ declare global {
             username?: string;
             language_code?: string;
           };
+          start_param?: string;
         };
       };
     };
