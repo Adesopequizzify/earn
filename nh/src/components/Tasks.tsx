@@ -31,6 +31,7 @@ const iconMap: { [key: string]: React.ElementType } = {
   'bookmark': Bookmark,
   'star': Star,
 }
+// ... (previous imports remain the same)
 
 export function Tasks() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -79,7 +80,8 @@ export function Tasks() {
       }, 5000)
     } else if (taskStatus[task.id] === 'claiming') {
       try {
-        const userRef = doc(db, 'users', user.id)
+        // Convert user.id to string when creating document reference
+        const userRef = doc(db, 'users', user.id.toString())
         await updateDoc(userRef, {
           points: (userData?.points || 0) + task.reward,
           completedTasks: [...(userData?.completedTasks || []), task.id]
@@ -87,7 +89,7 @@ export function Tasks() {
 
         const rewardRef = collection(db, 'rewards')
         await addDoc(rewardRef, {
-          userId: user.id,
+          userId: user.id.toString(), // Convert to string here as well
           taskId: task.id,
           amount: task.reward,
           description: `Completed: ${task.name}`,
@@ -101,6 +103,11 @@ export function Tasks() {
       }
     }
   }
+
+  
+
+
+
 
   const getTaskButton = (task: Task) => {
     const status = taskStatus[task.id]
