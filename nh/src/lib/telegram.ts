@@ -1,21 +1,10 @@
-import { WebApp } from '@twa-dev/types'
-
-declare global {
-  interface Window {
-    Telegram: {
-      WebApp: WebApp
-    }
-  }
-}
+import WebApp from '@twa-dev/sdk'
 
 export const initializeTelegramWebApp = () => {
-  if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+  if (typeof window !== 'undefined' && WebApp) {
     try {
-      const webApp = window.Telegram.WebApp
-      webApp.ready()
-      // Enable closing confirmation
-      webApp.enableClosingConfirmation()
-      return webApp
+      WebApp.ready()
+      return WebApp
     } catch (error) {
       console.error('Failed to initialize Telegram Web App:', error)
       return null
@@ -68,6 +57,6 @@ export const showTelegramAlert = (message: string) => {
 }
 
 export const isTelegramWebApp = () => {
-  return typeof window !== 'undefined' && window.Telegram?.WebApp ? true : false
+  return typeof window !== 'undefined' && WebApp ? true : false
 }
 
