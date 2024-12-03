@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { signOut } from 'firebase/auth'
 import { db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -64,23 +63,7 @@ export function Dashboard() {
     return () => clearInterval(interval)
   }, [banners])
 
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth)
-      closeTelegramWebApp()
-      toast({
-        title: "Signed out successfully",
-        description: "See you next time!",
-      })
-    } catch (error) {
-      toast({
-        title: "Error signing out",
-        description: error instanceof Error ? error.message : "An unexpected error occurred.",
-        variant: "destructive",
-      })
-    }
-  }
-
+ 
   const handleJoinCommunity = () => {
     window.open('https://t.me/swhit_tg', '_blank')
   }
@@ -103,7 +86,7 @@ export function Dashboard() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onSelect={() => {}}>Profile</DropdownMenuItem>
-              <DropdownMenuItem onSelect={handleSignOut}>Sign out</DropdownMenuItem>
+              
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
