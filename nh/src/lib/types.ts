@@ -1,6 +1,8 @@
 export interface UserData {
   telegramId: string;
-  username: string;
+  firstName: string;
+  lastName?: string;
+  username?: string;
   points: number;
   rank: string;
   referralCode: string;
