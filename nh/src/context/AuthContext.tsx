@@ -24,7 +24,9 @@ interface UserData {
   createdAt: Date
   lastLogin: Date
   completedTasks: string[]
+  languageCode: string | null
 }
+
 
 interface AuthContextType {
   user: TelegramUser | null
