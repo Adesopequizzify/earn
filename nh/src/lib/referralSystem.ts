@@ -16,7 +16,6 @@ interface UserData {
 
 async function logReferralStep(step: string, details: any) {
   console.log(`Referral Step: ${step}`, details);
-  // You could also write this to Firestore for persistent logging
 }
 
 export async function processReferral(newUserId: string, referralCode: string, retryCount = 0): Promise<boolean> {
@@ -79,7 +78,7 @@ export async function processReferral(newUserId: string, referralCode: string, r
     batch.set(referralRef, {
       referrerId,
       referredId: newUserId,
-      date: new Date().toISOString(),
+      date: new Date(),
       processed: true
     });
 
@@ -90,7 +89,7 @@ export async function processReferral(newUserId: string, referralCode: string, r
       amount: 2500,
       type: 'referral',
       description: `Referral bonus for inviting user ${newUserId}`,
-      date: new Date().toISOString()
+      date: new Date()
     });
 
     const newUserRewardRef = doc(collection(db, 'rewards'));
@@ -99,7 +98,7 @@ export async function processReferral(newUserId: string, referralCode: string, r
       amount: 1500,
       type: 'welcome',
       description: `Welcome bonus from referral by ${referrerData.username}`,
-      date: new Date().toISOString()
+      date: new Date()
     });
 
     // 5. Commit the batch
@@ -118,7 +117,7 @@ export async function processReferral(newUserId: string, referralCode: string, r
       const pendingDoc = pendingSnapshot.docs[0];
       await updateDoc(pendingDoc.ref, {
         processed: true,
-        processedAt: new Date().toISOString()
+        processedAt: new Date()
       });
       await logReferralStep('Pending Referral Updated', { pendingDocId: pendingDoc.id });
     }
@@ -139,20 +138,26 @@ export async function processReferral(newUserId: string, referralCode: string, r
   }
 }
 
-export async function processPendingReferrals() {
-  const pendingReferralsRef = collection(db, 'pendingReferrals');
-  const q = query(pendingReferralsRef, where('processed', '==', false));
-  const querySnapshot = await getDocs(q);
+export async function checkPendingReferrals(userId: string): Promise<void> {
+  try {
+    console.log('Checking pending referrals for user:', userId);
+    const pendingReferralsRef = collection(db, 'pendingReferrals');
+    const q = query(
+      pendingReferralsRef, 
+      where('chatId', '==', userId),
+      where('processed', '!=', true)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    console.log('Found pending referrals:', querySnapshot.size);
 
-  const results = [];
-
-  for (const doc of querySnapshot.docs) {
-    const data = doc.data();
-    const result = await processReferral(data.chatId, data.referralCode);
-    results.push({ id: doc.id, success: result });
+    for (const doc of querySnapshot.docs) {
+      const data = doc.data();
+      console.log('Processing pending referral:', data);
+      await processReferral(userId, data.referralCode);
+    }
+  } catch (error) {
+    console.error('Error checking pending referrals:', error);
   }
-
-  return results;
 }
 
-                           
