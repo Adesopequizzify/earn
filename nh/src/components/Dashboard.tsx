@@ -21,6 +21,7 @@ import { Tasks } from './Tasks'
 import { Leaderboard } from './Leaderboard'
 import { Friends } from './Friends'
 import { collection, query, orderBy, limit, getDocs, DocumentData } from 'firebase/firestore'
+import { closeTelegramWebApp } from '@/lib/telegram'
 
 interface Banner extends DocumentData {
   id: string;
@@ -41,7 +42,7 @@ export function Dashboard() {
   const [banners, setBanners] = useState<Banner[]>([])
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
   const { toast } = useToast()
-  const { userData } = useAuth()
+  const { user, userData, refreshUserData } = useAuth()
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -66,6 +67,7 @@ export function Dashboard() {
   const handleSignOut = async () => {
     try {
       await signOut(auth)
+      closeTelegramWebApp()
       toast({
         title: "Signed out successfully",
         description: "See you next time!",
@@ -89,9 +91,9 @@ export function Dashboard() {
         <div className="flex justify-between items-center p-4 max-w-4xl mx-auto w-full">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold">
-              {userData?.username?.[0]?.toUpperCase() || 'U'}
+              {user?.firstName?.[0]?.toUpperCase() || 'U'}
             </div>
-            <span className="font-medium text-primary">{userData?.username || 'User'}</span>
+            <span className="font-medium text-primary">{user?.firstName || 'User'}</span>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
