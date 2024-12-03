@@ -1,77 +1,110 @@
 "use client"
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User } from 'firebase/auth';
-import { auth, db, checkEmailVerification, updateUserEmailVerificationStatus } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import React, { createContext, useContext, useEffect, useState } from 'react'
+import { getTelegramUser } from '@/lib/telegram'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+
+interface TelegramUser {
+  id: string
+  username: string
+  firstName: string
+  lastName: string
+  languageCode: string
+  isPremium: boolean
+}
+
+interface UserData {
+  telegramId: string
+  username: string
+  points: number
+  rank: string
+  referralCode: string
+  referredBy: string | null
+  createdAt: Date
+  lastLogin: Date
+}
 
 interface AuthContextType {
-  user: User | null;
-  userData: any | null;
-  loading: boolean;
-  emailVerified: boolean;
-  refreshEmailVerification: () => Promise<void>;
+  user: TelegramUser | null
+  userData: UserData | null
+  loading: boolean
+  refreshUserData: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   userData: null,
   loading: true,
-  emailVerified: false,
-  refreshEmailVerification: async () => {},
-});
+  refreshUserData: async () => {},
+})
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [emailVerified, setEmailVerified] = useState(false);
+  const [user, setUser] = useState<TelegramUser | null>(null)
+  const [userData, setUserData] = useState<UserData | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      setUser(user);
-      if (user) {
-        const isVerified = await checkEmailVerification(user);
-        setEmailVerified(isVerified);
-        await updateUserEmailVerificationStatus(user.uid, isVerified);
-      } else {
-        setEmailVerified(false);
+  const createOrUpdateUser = async (telegramUser: TelegramUser) => {
+    const userRef = doc(db, 'users', telegramUser.id)
+    const userSnap = await getDoc(userRef)
+
+    if (!userSnap.exists()) {
+      const newUserData: UserData = {
+        telegramId: telegramUser.id,
+        username: telegramUser.username,
+        points: 1500,
+        rank: 'NOVICE',
+        referralCode: generateReferralCode(telegramUser.id),
+        referredBy: null,
+        createdAt: new Date(),
+        lastLogin: new Date(),
       }
-      setLoading(false);
-    });
+      await setDoc(userRef, newUserData)
+      setUserData(newUserData)
+    } else {
+      const existingUserData = userSnap.data() as UserData
+      const updatedUserData = {
+        ...existingUserData,
+        lastLogin: new Date(),
+      }
+      await setDoc(userRef, updatedUserData, { merge: true })
+      setUserData(updatedUserData)
+    }
+  }
 
-    return unsubscribe;
-  }, []);
+  const refreshUserData = async () => {
+    if (user) {
+      const userRef = doc(db, 'users', user.id)
+      const userSnap = await getDoc(userRef)
+      if (userSnap.exists()) {
+        setUserData(userSnap.data() as UserData)
+      }
+    }
+  }
 
   useEffect(() => {
-    if (user) {
-      const userRef = doc(db, 'users', user.uid);
-      const unsubscribe = onSnapshot(userRef, (doc) => {
-        if (doc.exists()) {
-          setUserData(doc.data());
-        } else {
-          setUserData(null);
-        }
-      });
-
-      return unsubscribe;
+    const initAuth = async () => {
+      const telegramUser = getTelegramUser()
+      if (telegramUser) {
+        setUser(telegramUser)
+        await createOrUpdateUser(telegramUser)
+      }
+      setLoading(false)
     }
-  }, [user]);
 
-  const refreshEmailVerification = async () => {
-    if (user) {
-      const isVerified = await checkEmailVerification(user);
-      setEmailVerified(isVerified);
-      await updateUserEmailVerificationStatus(user.uid, isVerified);
-    }
-  };
+    initAuth()
+  }, [])
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading, emailVerified, refreshEmailVerification }}>
+    <AuthContext.Provider value={{ user, userData, loading, refreshUserData }}>
       {children}
     </AuthContext.Provider>
-  );
-};
+  )
+}
+
+function generateReferralCode(telegramId: string): string {
+  return `REF${telegramId.substring(0, 6).toUpperCase()}`
+}
 
