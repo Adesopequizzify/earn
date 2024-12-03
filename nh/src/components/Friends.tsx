@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { Button } from './ui/button'
@@ -8,12 +8,24 @@ import { Card, CardContent } from './ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { useAuth } from '@/context/AuthContext'
 import { Share, Copy, Link } from 'lucide-react'
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
+import { getReferralStats } from '@/lib/referralSystem'
 
 export function Friends() {
   const { userData } = useAuth()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { toast } = useToast()
+  const [referralStats, setReferralStats] = useState({ totalReferrals: 0, totalPoints: 0 })
+
+  useEffect(() => {
+    const fetchReferralStats = async () => {
+      if (userData) {
+        const stats = await getReferralStats(userData.telegramId)
+        setReferralStats(stats)
+      }
+    }
+    fetchReferralStats()
+  }, [userData])
 
   const getReferralLink = () => {
     return `https://t.me/wheatsol_bot/app?startapp=${userData?.referralCode}`
@@ -30,42 +42,36 @@ export function Friends() {
 
   const handleCopyLink = () => {
     const referralLink = getReferralLink()
-    if (typeof window !== 'undefined' && window.Telegram?.WebApp?.readTextFromClipboard) {
-      window.Telegram.WebApp.readTextFromClipboard(referralLink)
+    navigator.clipboard.writeText(referralLink).then(() => {
       toast({
         title: "Link copied",
         description: "Referral link copied to clipboard!",
       })
-    } else {
-      navigator.clipboard.writeText(referralLink).then(() => {
-        toast({
-          title: "Link copied",
-          description: "Referral link copied to clipboard!",
-        })
-      }, (err) => {
-        console.error('Could not copy text: ', err)
+    }, (err) => {
+      console.error('Could not copy text: ', err)
+      toast({
+        title: "Error",
+        description: "Failed to copy referral link",
+        variant: "destructive",
       })
-    }
+    })
   }
 
   const handleCopyCode = () => {
     if (userData?.referralCode) {
-      if (typeof window !== 'undefined' && window.Telegram?.WebApp?.readTextFromClipboard) {
-        window.Telegram.WebApp.readTextFromClipboard(userData.referralCode)
+      navigator.clipboard.writeText(userData.referralCode).then(() => {
         toast({
           title: "Code copied",
           description: "Referral code copied to clipboard!",
         })
-      } else {
-        navigator.clipboard.writeText(userData.referralCode).then(() => {
-          toast({
-            title: "Code copied",
-            description: "Referral code copied to clipboard!",
-          })
-        }, (err) => {
-          console.error('Could not copy text: ', err)
+      }, (err) => {
+        console.error('Could not copy text: ', err)
+        toast({
+          title: "Error",
+          description: "Failed to copy referral code",
+          variant: "destructive",
         })
-      }
+      })
     } else {
       toast({
         title: "Error",
@@ -104,6 +110,10 @@ export function Friends() {
             <Button onClick={() => setIsModalOpen(true)} className="w-full">
               Invite
             </Button>
+            <div className="text-center">
+              <p>Total Referrals: {referralStats.totalReferrals}</p>
+              <p>Total Points Earned: {referralStats.totalPoints}</p>
+            </div>
           </motion.div>
         </CardContent>
       </Card>
