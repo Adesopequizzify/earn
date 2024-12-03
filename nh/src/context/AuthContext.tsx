@@ -10,7 +10,7 @@ interface TelegramUser {
   username: string
   firstName: string
   lastName: string
-  languageCode: string
+  languageCode: string | null // Changed from string to string | null
   isPremium: boolean
 }
 
@@ -51,38 +51,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null)
 
   const createOrUpdateUser = async (telegramUser: TelegramUser) => {
-    try {
-      const userRef = doc(db, 'users', telegramUser.id)
-      const userSnap = await getDoc(userRef)
+  try {
+    const userRef = doc(db, 'users', telegramUser.id)
+    const userSnap = await getDoc(userRef)
 
-      if (!userSnap.exists()) {
-        const newUserData: UserData = {
-          telegramId: telegramUser.id,
-          username: telegramUser.username,
-          points: 1500,
-          rank: 'NOVICE',
-          referralCode: generateReferralCode(telegramUser.id),
-          referredBy: null,
-          createdAt: new Date(),
-          lastLogin: new Date(),
-          completedTasks: [], // Add this line
-        }
-        await setDoc(userRef, newUserData)
-        setUserData(newUserData)
-      } else {
-        const existingUserData = userSnap.data() as UserData
-        const updatedUserData = {
-          ...existingUserData,
-          lastLogin: new Date(),
-        }
-        await setDoc(userRef, updatedUserData, { merge: true })
-        setUserData(updatedUserData)
+    if (!userSnap.exists()) {
+      const newUserData: UserData = {
+        telegramId: telegramUser.id,
+        username: telegramUser.username,
+        points: 1500,
+        rank: 'NOVICE',
+        referralCode: generateReferralCode(telegramUser.id),
+        referredBy: null,
+        createdAt: new Date(),
+        lastLogin: new Date(),
+        completedTasks: [],
+        languageCode: telegramUser.languageCode || 'en' // Provide default value
       }
-    } catch (err) {
-      setError('Failed to create or update user data')
-      console.error('Error in createOrUpdateUser:', err)
+      await setDoc(userRef, newUserData)
+      setUserData(newUserData)
+    } else {
+      const existingUserData = userSnap.data() as UserData
+      const updatedUserData = {
+        ...existingUserData,
+        lastLogin: new Date(),
+        languageCode: telegramUser.languageCode || existingUserData.languageCode || 'en'
+      }
+      await setDoc(userRef, updatedUserData, { merge: true })
+      setUserData(updatedUserData)
     }
+  } catch (err) {
+    setError('Failed to create or update user data')
+    console.error('Error in createOrUpdateUser:', err)
   }
+}
+
 
   const refreshUserData = async () => {
     if (user) {
