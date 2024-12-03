@@ -2,9 +2,9 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { getTelegramUser, initializeTelegramWebApp } from '@/lib/telegram'
-import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import { checkPendingReferrals } from '@/lib/referralSystem'
+import { processReferral } from '@/lib/referralSystem'
 
 interface TelegramUser {
   id: number;
@@ -90,12 +90,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           completedTasks: [],
           languageCode: telegramUser.language_code
         }
+
+        // Check for referral code in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const referralCode = urlParams.get('ref');
+        
+        if (referralCode) {
+          console.log('Processing referral for new user');
+          const referralResult = await processReferral(telegramUser.id.toString(), referralCode);
+          if (referralResult) {
+            newUserData.referredBy = referralResult.referrerId;
+            newUserData.points += 1500; // Bonus points for being referred
+          }
+        }
+
         await setDoc(userRef, newUserData)
         setUserData(newUserData)
-
-        // Check for pending referrals immediately after creating new user
-        console.log('Checking pending referrals for new user');
-        await checkPendingReferrals(telegramUser.id.toString())
       } else {
         console.log('Updating existing user:', telegramUser.id);
         const existingUserData = userSnap.data() as UserData
@@ -106,12 +116,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         await setDoc(userRef, updatedUserData, { merge: true })
         setUserData(updatedUserData)
-
-        // If user doesn't have referredBy set, check for pending referrals
-        if (!existingUserData.referredBy) {
-          console.log('Checking pending referrals for existing user without referral');
-          await checkPendingReferrals(telegramUser.id.toString())
-        }
       }
     } catch (err) {
       console.error('Error in createOrUpdateUser:', err)
@@ -146,5 +150,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </AuthContext.Provider>
   )
-}
-
+        }
