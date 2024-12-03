@@ -1,17 +1,18 @@
 "use client"
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { getTelegramUser } from '@/lib/telegram'
+import { getTelegramUser, initializeTelegramWebApp } from '@/lib/telegram'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { db } from '@/lib/firebase
 
 interface TelegramUser {
   id: number;
   first_name: string;
-  last_name: string | null;
-  username: string | null;
-  photo_url: string | null;
+  last_name?: string;
+  username?: string;
+  language_code?: string;
 }
+
 
 interface UserData {
   telegramId: string
