@@ -5,6 +5,8 @@ import { getTelegramUser, initializeTelegramWebApp } from '@/lib/telegram'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { processReferral } from '@/lib/referralSystem'
+import { UserData } from '@/lib/types'
+import { useToast } from "@/components/ui/use-toast"
 
 interface TelegramUser {
   id: number;
@@ -12,19 +14,6 @@ interface TelegramUser {
   last_name: string;
   username: string;
   language_code: string | null;
-}
-
-interface UserData {
-  telegramId: string;
-  username: string;
-  points: number;
-  rank: string;
-  referralCode: string;
-  referredBy: string | null;
-  createdAt: Date;
-  lastLogin: Date;
-  completedTasks: string[];
-  languageCode: string | null;
 }
 
 interface AuthContextType {
@@ -54,6 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userData, setUserData] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
   const refreshUserData = async () => {
     if (user) {
@@ -67,10 +57,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUserData(refreshedUserData)
         } else {
           console.log('User document does not exist')
+          toast({
+            title: "Error",
+            description: "User data not found",
+            variant: "destructive",
+          })
         }
       } catch (err) {
         console.error('Error refreshing user data:', err)
         setError('Failed to refresh user data')
+        toast({
+          title: "Error",
+          description: "Failed to refresh user data",
+          variant: "destructive",
+        })
       }
     } else {
       console.log('No user to refresh data for')
@@ -91,7 +91,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           points: 1500,
           rank: 'NOVICE',
           referralCode: generateReferralCode(telegramUser.id.toString()),
-          referredBy: null,
           createdAt: new Date(),
           lastLogin: new Date(),
           completedTasks: [],
@@ -104,12 +103,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (startParam) {
           console.log('Processing referral for new user with start param:', startParam)
           const referralResult = await processReferral(telegramUser.id.toString(), startParam)
-          if (referralResult) {
-            console.log('Referral processed successfully:', referralResult)
-            newUserData.referredBy = referralResult.referrerId
+          if (referralResult.success) {
+            console.log('Referral processed successfully:', referralResult.message)
             newUserData.points += 1000 // Bonus points for being referred
+            toast({
+              title: "Referral Successful",
+              description: referralResult.message,
+            })
           } else {
-            console.log('Referral processing did not return a result')
+            console.log('Referral processing failed:', referralResult.message)
+            toast({
+              title: "Referral Failed",
+              description: referralResult.message,
+              variant: "destructive",
+            })
           }
         } else {
           console.log('No start param found for referral processing')
@@ -118,6 +125,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await setDoc(userRef, newUserData)
         console.log('New user data saved:', newUserData)
         setUserData(newUserData)
+        toast({
+          title: "Welcome!",
+          description: "Your account has been created successfully.",
+        })
       } else {
         console.log('Updating existing user:', telegramUser.id)
         const existingUserData = userSnap.data() as UserData
@@ -129,10 +140,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await setDoc(userRef, updatedUserData, { merge: true })
         console.log('Updated user data:', updatedUserData)
         setUserData(updatedUserData)
+        toast({
+          title: "Welcome back!",
+          description: "Your session has been updated.",
+        })
       }
     } catch (err) {
       console.error('Error in createOrUpdateUser:', err)
       setError('Failed to create or update user data')
+      toast({
+        title: "Error",
+        description: "Failed to create or update user data",
+        variant: "destructive",
+      })
     }
   }
 
@@ -149,16 +169,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           console.log('Telegram Web App data not available')
           setError('Telegram Web App data not available')
+          toast({
+            title: "Error",
+            description: "Telegram Web App data not available",
+            variant: "destructive",
+          })
         }
       } catch (err) {
         console.error('Error in initAuth:', err)
         setError('Failed to initialize authentication')
+        toast({
+          title: "Error",
+          description: "Failed to initialize authentication",
+          variant: "destructive",
+        })
       } finally {
         setLoading(false)
       }
     }
 
-    initAuth()
+    // Delay the initialization by 1 minute (60000 milliseconds)
+    const timer = setTimeout(() => {
+      initAuth()
+    }, 60000)
+
+    // Clean up the timer if the component unmounts
+    return () => clearTimeout(timer)
   }, [])
 
   return (
