@@ -1,85 +1,60 @@
-import { db } from '@/lib/firebase'
-import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc, increment, writeBatch } from 'firebase/firestore'
+import { db } from './firebase'
+import { doc, getDoc, setDoc, increment, serverTimestamp } from 'firebase/firestore'
 
-interface UserData {
-  telegramId: string;
-  username: string;
-  points: number;
-  rank: string;
-  referralCode: string;
-  referredBy: string | null;
-  createdAt: Date;
-  lastLogin: Date;
-  completedTasks: string[];
-  languageCode: string | null;
+interface ReferralResult {
+  referrerId: string;
+  success: boolean;
 }
 
-async function logReferralStep(step: string, details: any) {
-  console.log(`Referral Step: ${step}`, details);
-}
-
-export async function processReferral(newUserId: string, referralCode: string): Promise<{ referrerId: string } | null> {
+export async function processReferral(newUserId: string, referralCode: string): Promise<ReferralResult | null> {
   try {
-    await logReferralStep('Start', { newUserId, referralCode });
+    // Find referrer by their referral code
+    const usersRef = doc(db, 'users', referralCode)
+    const referrerDoc = await getDoc(usersRef)
 
-    // 1. Verify the referral code exists
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('referralCode', '==', referralCode));
-    const querySnapshot = await getDocs(q);
+    if (!referrerDoc.exists()) return null
 
-    if (querySnapshot.empty) {
-      await logReferralStep('Invalid Referral Code', { referralCode });
-      return null;
-    }
+    const referrerId = referrerDoc.id
 
-    const referrerDoc = querySnapshot.docs[0];
-    const referrerId = referrerDoc.id;
-    const referrerData = referrerDoc.data() as UserData;
+    // Prevent self-referral
+    if (referrerId === newUserId) return null
 
-    await logReferralStep('Referrer Found', { referrerId, referrerData });
+    // Update referrer
+    await setDoc(doc(db, 'users', referrerId), {
+      points: increment(2500), // Bonus for referring
+      lastUpdated: serverTimestamp()
+    }, { merge: true })
 
-    // 2. Verify this isn't a self-referral
-    if (referrerId === newUserId) {
-      await logReferralStep('Self-Referral Attempt', { newUserId, referrerId });
-      return null;
-    }
-
-    // 3. Start the batch write
-    const batch = writeBatch(db);
-
-    // Update referrer's points
-    batch.update(doc(db, 'users', referrerId), {
-      points: increment(2500)
-    });
-
-    // Create referral record
-    const referralRef = doc(collection(db, 'referrals'));
-    batch.set(referralRef, {
+    // Record the referral
+    await setDoc(doc(db, 'referrals', `${referrerId}_${newUserId}`), {
       referrerId,
       referredId: newUserId,
-      date: new Date(),
-      processed: true
-    });
+      points: 2500,
+      timestamp: serverTimestamp()
+    })
 
-    // Create reward records
-    const referrerRewardRef = doc(collection(db, 'rewards'));
-    batch.set(referrerRewardRef, {
-      userId: referrerId,
-      amount: 2500,
-      type: 'referral',
-      description: `Referral bonus for inviting user ${newUserId}`,
-      date: new Date()
-    });
-
-    // 5. Commit the batch
-    await batch.commit();
-    await logReferralStep('Batch Committed', { referrerId, newUserId });
-
-    await logReferralStep('Referral Processed Successfully', { referrerId, newUserId });
-    return { referrerId };
+    return { referrerId, success: true }
   } catch (error) {
-    console.error('Error processing referral:', error);
-    await logReferralStep('Error', { error });
-    throw error;
+    console.error('Error processing referral:', error)
+    return null
   }
 }
+
+export async function getReferralStats(userId: string) {
+  try {
+    const userRef = doc(db, 'users', userId)
+    const userDoc = await getDoc(userRef)
+    
+    if (!userDoc.exists()) return { totalReferrals: 0, totalPoints: 0 }
+
+    const userData = userDoc.data()
+    return {
+      totalReferrals: userData.totalReferrals || 0,
+      totalPoints: userData.referralPoints || 0
+    }
+  } catch (error) {
+    console.error('Error getting referral stats:', error)
+    return { totalReferrals: 0, totalPoints: 0 }
+  }
+}
+
