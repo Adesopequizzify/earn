@@ -1,10 +1,29 @@
-import WebApp from '@twa-dev/sdk'
+declare global {
+  interface Window {
+    Telegram: {
+      WebApp: {
+        ready: () => void;
+        close: () => void;
+        showAlert: (message: string) => void;
+        initDataUnsafe: {
+          user?: {
+            id: number;
+            first_name: string;
+            last_name?: string;
+            username?: string;
+            language_code?: string;
+          };
+        };
+      };
+    };
+  }
+}
 
 export const initializeTelegramWebApp = () => {
-  if (typeof window !== 'undefined' && WebApp) {
+  if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
     try {
-      WebApp.ready()
-      return WebApp
+      window.Telegram.WebApp.ready()
+      return window.Telegram.WebApp
     } catch (error) {
       console.error('Failed to initialize Telegram Web App:', error)
       return null
@@ -14,8 +33,8 @@ export const initializeTelegramWebApp = () => {
 }
 
 export const getTelegramUser = () => {
-  const webApp = initializeTelegramWebApp()
-  if (webApp) {
+  if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+    const webApp = window.Telegram.WebApp
     const user = webApp.initDataUnsafe?.user
     if (user) {
       return {
@@ -24,12 +43,12 @@ export const getTelegramUser = () => {
         firstName: user.first_name,
         lastName: user.last_name || '',
         languageCode: user.language_code || null,
-        isPremium: user.is_premium || false,
+        isPremium: false, // This is not available in the basic WebApp data
       }
     }
   }
+  
   if (process.env.NODE_ENV === 'development') {
-    // Return mock data for development
     return {
       id: '12345',
       username: 'test_user',
@@ -39,24 +58,23 @@ export const getTelegramUser = () => {
       isPremium: false,
     }
   }
+  
   return null
 }
 
 export const closeTelegramWebApp = () => {
-  const webApp = initializeTelegramWebApp()
-  if (webApp) {
-    webApp.close()
+  if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+    window.Telegram.WebApp.close()
   }
 }
 
 export const showTelegramAlert = (message: string) => {
-  const webApp = initializeTelegramWebApp()
-  if (webApp) {
-    webApp.showAlert(message)
+  if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+    window.Telegram.WebApp.showAlert(message)
   }
 }
 
 export const isTelegramWebApp = () => {
-  return typeof window !== 'undefined' && WebApp ? true : false
+  return typeof window !== 'undefined' && window.Telegram?.WebApp ? true : false
 }
 
