@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { getTelegramUser, initializeTelegramWebApp } from '@/lib/telegram'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc, increment } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 
 interface TelegramUser {
@@ -74,6 +74,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         await setDoc(userRef, newUserData)
         setUserData(newUserData)
+
+        // Check for pending referrals
+        await checkPendingReferrals(telegramUser.id.toString())
       } else {
         const existingUserData = userSnap.data() as UserData
         const updatedUserData = {
@@ -87,6 +90,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       setError('Failed to create or update user data')
       console.error('Error in createOrUpdateUser:', err)
+    }
+  }
+
+  const checkPendingReferrals = async (userId: string) => {
+    const pendingReferralsRef = collection(db, 'pendingReferrals')
+    const q = query(pendingReferralsRef, where('chatId', '==', userId))
+    const querySnapshot = await getDocs(q)
+
+    if (!querySnapshot.empty) {
+      const pendingReferral = querySnapshot.docs[0].data()
+      const referralCode = pendingReferral.referralCode
+
+      // Process the referral
+      await processReferral(userId, referralCode)
+
+      // Delete the pending referral
+      await setDoc(querySnapshot.docs[0].ref, { processed: true }, { merge: true })
+    }
+  }
+
+  const processReferral = async (newUserId: string, referralCode: string) => {
+    const usersRef = collection(db, 'users')
+    const q = query(usersRef, where('referralCode', '==', referralCode))
+    const querySnapshot = await getDocs(q)
+
+    if (!querySnapshot.empty) {
+      const referrerDoc = querySnapshot.docs[0]
+      const referrerId = referrerDoc.id
+
+      // Update referrer's points
+      await updateDoc(doc(db, 'users', referrerId), {
+        points: increment(2500)
+      })
+
+      // Update new user's points and set referredBy
+      await updateDoc(doc(db, 'users', newUserId), {
+        points: increment(1500),
+        referredBy: referrerId
+      })
+
+      // Add to referrals collection
+      await setDoc(doc(collection(db, 'referrals')), {
+        referrerId,
+        referredId: newUserId,
+        date: new Date()
+      })
     }
   }
 
