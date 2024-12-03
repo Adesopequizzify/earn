@@ -6,19 +6,24 @@ import { Button } from '@/components/ui/button'
 import { showTelegramAlert } from '@/lib/telegram'
 
 export function SplashScreen() {
-  const { loading, user, error } = useAuth()
-  const [status, setStatus] = useState('Initializing...')
+  const { loading, user, error, statusMessage } = useAuth()
+  const [progress, setProgress] = useState(0)
 
   useEffect(() => {
     if (loading) {
-      setStatus('Connecting to Telegram...')
-    } else if (user) {
-      setStatus('Loading your profile...')
-    } else if (error) {
-      setStatus('Unable to connect. Please try again.')
-      showTelegramAlert(error)
+      const interval = setInterval(() => {
+        setProgress((prevProgress) => {
+          if (prevProgress >= 100) {
+            clearInterval(interval)
+            return 100
+          }
+          return prevProgress + 1
+        })
+      }, 100)
+
+      return () => clearInterval(interval)
     }
-  }, [loading, user, error])
+  }, [loading])
 
   const handleRetry = () => {
     window.location.reload()
@@ -39,8 +44,16 @@ export function SplashScreen() {
         transition={{ delay: 0.5, duration: 0.5 }}
         className="mt-8 text-2xl font-bold text-primary"
       >
-        {status}
+        {statusMessage}
       </motion.h1>
+      {loading && (
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          className="h-2 bg-primary mt-4 rounded-full"
+          style={{ width: '200px' }}
+        />
+      )}
       {error && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
