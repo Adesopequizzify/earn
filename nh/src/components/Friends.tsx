@@ -16,7 +16,7 @@ export function Friends() {
   const { toast } = useToast()
 
   const getReferralLink = () => {
-    return `${window.location.origin}/signup?referral=${userData?.referralCode}`
+    return `https://t.me/your_bot_username?start=${userData?.referralCode}`
   }
 
   const handleShare = async () => {
