@@ -29,6 +29,7 @@ interface AuthContextType {
   user: TelegramUser | null
   userData: UserData | null
   loading: boolean
+  error: string | null
   refreshUserData: () => Promise<void>
 }
 
@@ -36,6 +37,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   userData: null,
   loading: true,
+  error: null,
   refreshUserData: async () => {},
 })
 
@@ -45,60 +47,79 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<TelegramUser | null>(null)
   const [userData, setUserData] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const createOrUpdateUser = async (telegramUser: TelegramUser) => {
-    const userRef = doc(db, 'users', telegramUser.id)
-    const userSnap = await getDoc(userRef)
+    try {
+      const userRef = doc(db, 'users', telegramUser.id)
+      const userSnap = await getDoc(userRef)
 
-    if (!userSnap.exists()) {
-      const newUserData: UserData = {
-        telegramId: telegramUser.id,
-        username: telegramUser.username,
-        points: 1500,
-        rank: 'NOVICE',
-        referralCode: generateReferralCode(telegramUser.id),
-        referredBy: null,
-        createdAt: new Date(),
-        lastLogin: new Date(),
+      if (!userSnap.exists()) {
+        const newUserData: UserData = {
+          telegramId: telegramUser.id,
+          username: telegramUser.username,
+          points: 1500,
+          rank: 'NOVICE',
+          referralCode: generateReferralCode(telegramUser.id),
+          referredBy: null,
+          createdAt: new Date(),
+          lastLogin: new Date(),
+        }
+        await setDoc(userRef, newUserData)
+        setUserData(newUserData)
+      } else {
+        const existingUserData = userSnap.data() as UserData
+        const updatedUserData = {
+          ...existingUserData,
+          lastLogin: new Date(),
+        }
+        await setDoc(userRef, updatedUserData, { merge: true })
+        setUserData(updatedUserData)
       }
-      await setDoc(userRef, newUserData)
-      setUserData(newUserData)
-    } else {
-      const existingUserData = userSnap.data() as UserData
-      const updatedUserData = {
-        ...existingUserData,
-        lastLogin: new Date(),
-      }
-      await setDoc(userRef, updatedUserData, { merge: true })
-      setUserData(updatedUserData)
+    } catch (err) {
+      setError('Failed to create or update user data')
+      console.error('Error in createOrUpdateUser:', err)
     }
   }
 
   const refreshUserData = async () => {
     if (user) {
-      const userRef = doc(db, 'users', user.id)
-      const userSnap = await getDoc(userRef)
-      if (userSnap.exists()) {
-        setUserData(userSnap.data() as UserData)
+      try {
+        const userRef = doc(db, 'users', user.id)
+        const userSnap = await getDoc(userRef)
+        if (userSnap.exists()) {
+          setUserData(userSnap.data() as UserData)
+        }
+      } catch (err) {
+        setError('Failed to refresh user data')
+        console.error('Error in refreshUserData:', err)
       }
     }
   }
 
   useEffect(() => {
     const initAuth = async () => {
-      const telegramUser = getTelegramUser()
-      if (telegramUser) {
-        setUser(telegramUser)
-        await createOrUpdateUser(telegramUser)
+      try {
+        const telegramUser = getTelegramUser()
+        if (telegramUser) {
+          setUser(telegramUser)
+          await createOrUpdateUser(telegramUser)
+        } else {
+          setError('Telegram Web App data not available')
+        }
+      } catch (err) {
+        setError('Failed to initialize authentication')
+        console.error('Error in initAuth:', err)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
 
     initAuth()
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading, refreshUserData }}>
+    <AuthContext.Provider value={{ user, userData, loading, error, refreshUserData }}>
       {children}
     </AuthContext.Provider>
   )
