@@ -2,12 +2,13 @@ import { initializeApp, getApps, getApp } from 'firebase/app'
 import { getFirestore, doc, setDoc, getDoc, updateDoc, increment, collection, query, where, getDocs, addDoc } from 'firebase/firestore'
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+ apiKey: "AIzaSyDuoOrUZxbuB1pq-zajOAEnuq1ia6IrQ8M",
+  authDomain: "earn-co.firebaseapp.com",
+  projectId: "earn-co",
+  storageBucket: "earn-co.firebasestorage.app",
+  messagingSenderId: "149304945888",
+  appId: "1:149304945888:web:cb1cd493926d982627b485",
+  measurementId: "G-96JNDZSD11"
 }
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
