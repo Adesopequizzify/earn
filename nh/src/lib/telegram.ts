@@ -38,24 +38,22 @@ export const getTelegramUser = () => {
     const user = webApp.initDataUnsafe?.user
     if (user) {
       return {
-        id: user.id.toString(),
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name || '',
         username: user.username || '',
-        firstName: user.first_name,
-        lastName: user.last_name || '',
-        languageCode: user.language_code || null,
-        isPremium: false, // This is not available in the basic WebApp data
+        language_code: user.language_code || null
       }
     }
   }
   
   if (process.env.NODE_ENV === 'development') {
     return {
-      id: '12345',
-      username: 'test_user',
-      firstName: 'Test',
-      lastName: 'User',
-      languageCode: 'en',
-      isPremium: false,
+      id: 12345,
+      first_name: 'Test',
+      last_name: 'User',
+      username: 'testuser',
+      language_code: 'en'
     }
   }
   
