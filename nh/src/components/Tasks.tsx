@@ -15,11 +15,14 @@ interface Task {
   reward: number
   icon: string
   type: 'limited' | 'in-game' | 'partners'
-  link?: string
-  completed?: boolean
+  link ? : string
+  completed ? : boolean
+  requiresVerification ? : boolean
+  verificationStatus ? : 'pending' | 'approved' | 'rejected'
 }
 
-type TaskStatus = 'idle' | 'checking' | 'claiming' | 'completed'
+type TaskStatus = 'idle' | 'checking' | 'claiming' | 'completed' | 'pending_verification'
+
 
 const iconMap: { [key: string]: React.ElementType } = {
   'zap': Zap,
@@ -74,13 +77,16 @@ export function Tasks() {
         window.open(task.link, '_blank')
       }
       setTaskStatus(prev => ({ ...prev, [task.id]: 'checking' }))
-      
+
       setTimeout(() => {
-        setTaskStatus(prev => ({ ...prev, [task.id]: 'claiming' }))
+        if (task.requiresVerification) {
+          setTaskStatus(prev => ({ ...prev, [task.id]: 'pending_verification' }))
+        } else {
+          setTaskStatus(prev => ({ ...prev, [task.id]: 'claiming' }))
+        }
       }, 5000)
     } else if (taskStatus[task.id] === 'claiming') {
       try {
-        // Convert user.id to string when creating document reference
         const userRef = doc(db, 'users', user.id.toString())
         await updateDoc(userRef, {
           points: (userData?.points || 0) + task.reward,
@@ -89,7 +95,7 @@ export function Tasks() {
 
         const rewardRef = collection(db, 'rewards')
         await addDoc(rewardRef, {
-          userId: user.id.toString(), // Convert to string here as well
+          userId: user.id.toString(),
           taskId: task.id,
           amount: task.reward,
           description: `Completed: ${task.name}`,
@@ -104,18 +110,13 @@ export function Tasks() {
     }
   }
 
-  
-
-
-
-
   const getTaskButton = (task: Task) => {
     const status = taskStatus[task.id]
-    
+
     if (status === 'completed') {
       return <Check className="w-5 h-5 text-green-500" />
     }
-    
+
     if (status === 'checking') {
       return (
         <button
@@ -127,7 +128,7 @@ export function Tasks() {
         </button>
       )
     }
-    
+
     if (status === 'claiming') {
       return (
         <button
@@ -138,7 +139,18 @@ export function Tasks() {
         </button>
       )
     }
-    
+
+    if (status === 'pending_verification') {
+      return (
+        <button
+          className="px-4 py-1.5 rounded-full bg-yellow-500 text-white"
+          disabled
+        >
+          Pending Verification
+        </button>
+      )
+    }
+
     return (
       <button
         onClick={() => handleTaskAction(task)}
@@ -148,6 +160,7 @@ export function Tasks() {
       </button>
     )
   }
+
 
   return (
     <div className="bg-black/95 p-4 rounded-xl space-y-6">
