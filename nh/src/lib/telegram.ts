@@ -8,10 +8,25 @@ declare global {
   }
 }
 
-export const getTelegramUser = () => {
+export const initializeTelegramWebApp = () => {
   if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-    const webApp = window.Telegram.WebApp
-    webApp.ready()
+    try {
+      const webApp = window.Telegram.WebApp
+      webApp.ready()
+      // Enable closing confirmation
+      webApp.enableClosingConfirmation()
+      return webApp
+    } catch (error) {
+      console.error('Failed to initialize Telegram Web App:', error)
+      return null
+    }
+  }
+  return null
+}
+
+export const getTelegramUser = () => {
+  const webApp = initializeTelegramWebApp()
+  if (webApp) {
     const user = webApp.initDataUnsafe?.user
     if (user) {
       return {
@@ -19,24 +34,40 @@ export const getTelegramUser = () => {
         username: user.username || '',
         firstName: user.first_name,
         lastName: user.last_name || '',
-        languageCode: user.language_code || null, // Handle potentially undefined language_code
+        languageCode: user.language_code || null,
         isPremium: user.is_premium || false,
       }
+    }
+  }
+  if (process.env.NODE_ENV === 'development') {
+    // Return mock data for development
+    return {
+      id: '12345',
+      username: 'test_user',
+      firstName: 'Test',
+      lastName: 'User',
+      languageCode: 'en',
+      isPremium: false,
     }
   }
   return null
 }
 
-
 export const closeTelegramWebApp = () => {
-  if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-    window.Telegram.WebApp.close()
+  const webApp = initializeTelegramWebApp()
+  if (webApp) {
+    webApp.close()
   }
 }
 
 export const showTelegramAlert = (message: string) => {
-  if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-    window.Telegram.WebApp.showAlert(message)
+  const webApp = initializeTelegramWebApp()
+  if (webApp) {
+    webApp.showAlert(message)
   }
+}
+
+export const isTelegramWebApp = () => {
+  return typeof window !== 'undefined' && window.Telegram?.WebApp ? true : false
 }
 
