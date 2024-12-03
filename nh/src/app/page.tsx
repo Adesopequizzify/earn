@@ -3,12 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { SplashScreen } from '@/components/SplashScreen'
-import { AuthScreen } from '@/components/AuthScreen'
 import { Dashboard } from '@/components/Dashboard'
-import { EmailVerification } from '@/components/EmailVerification'
 
 export default function Home() {
-  const { user, loading, emailVerified } = useAuth()
+  const { user, userData, loading, error } = useAuth()
   const [isInitializing, setIsInitializing] = useState(true)
 
   useEffect(() => {
@@ -22,12 +20,9 @@ export default function Home() {
     return <SplashScreen />
   }
 
-  if (!user) {
-    return <AuthScreen />
-  }
-
-  if (!emailVerified) {
-    return <EmailVerification />
+  if (error || !user) {
+    // Handle error state, possibly show an error component
+    return <div>Error: {error || 'Unable to authenticate'}</div>
   }
 
   return <Dashboard />
