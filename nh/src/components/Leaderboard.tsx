@@ -8,7 +8,9 @@ import { Medal } from 'lucide-react'
 
 interface LeaderboardUser {
   telegramId: string
-  username: string
+  firstName: string
+  lastName?: string
+  username?: string
   points: number
   avatar?: string
 }
@@ -31,6 +33,8 @@ export function Leaderboard() {
         const leaderboardSnapshot = await getDocs(leaderboardQuery)
         const leaderboardData = leaderboardSnapshot.docs.map(doc => ({
           telegramId: doc.id,
+          firstName: doc.data().firstName,
+          lastName: doc.data().lastName,
           username: doc.data().username,
           points: doc.data().points,
           avatar: doc.data().avatar
@@ -55,6 +59,11 @@ export function Leaderboard() {
       case 2: return 'text-amber-600'
       default: return 'text-white/60'
     }
+  }
+
+  const getDisplayName = (user: LeaderboardUser) => {
+    if (user.username) return user.username
+    return `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}`
   }
 
   return (
@@ -85,7 +94,7 @@ export function Leaderboard() {
                 {user.avatar ? (
                   <img
                     src={user.avatar}
-                    alt={`${user.username}'s avatar`}
+                    alt={`${getDisplayName(user)}'s avatar`}
                     className="w-6 h-6 rounded-full"
                   />
                 ) : (
@@ -97,7 +106,7 @@ export function Leaderboard() {
                 )}
               </div>
               <div>
-                <div className="text-white font-medium">{user.username}</div>
+                <div className="text-white font-medium">{getDisplayName(user)}</div>
                 <div className="text-white/60 text-sm">
                   {formatNumber(user.points)} SWHIT
                 </div>
