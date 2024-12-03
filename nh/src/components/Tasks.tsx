@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { collection, query, where, getDocs, updateDoc, doc, setDoc } from 'firebase/firestore'
+import { collection, query, where, getDocs, updateDoc, doc, setDoc, addDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { Loader2, Check, Zap, Trophy, Users, Rocket, Activity, Target, Bookmark, Star } from 'lucide-react'
@@ -35,10 +35,12 @@ const iconMap: { [key: string]: React.ElementType } = {
 export function Tasks() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [taskStatus, setTaskStatus] = useState<Record<string, TaskStatus>>({})
-  const { user, userData } = useAuth()
+  const { user, userData, refreshUserData } = useAuth()
 
   useEffect(() => {
     const fetchTasks = async () => {
+      if (!user) return
+
       try {
         const tasksRef = collection(db, 'tasks')
         const tasksQuery = query(tasksRef, where('active', '==', true))
@@ -60,10 +62,8 @@ export function Tasks() {
       }
     }
 
-    if (userData) {
-      fetchTasks()
-    }
-  }, [userData])
+    fetchTasks()
+  }, [user, userData])
 
   const handleTaskAction = async (task: Task) => {
     if (!user || taskStatus[task.id] === 'completed') return
@@ -79,15 +79,15 @@ export function Tasks() {
       }, 5000)
     } else if (taskStatus[task.id] === 'claiming') {
       try {
-        const userRef = doc(db, 'users', user.uid)
+        const userRef = doc(db, 'users', user.id)
         await updateDoc(userRef, {
           points: (userData?.points || 0) + task.reward,
           completedTasks: [...(userData?.completedTasks || []), task.id]
         })
 
-        const rewardRef = doc(collection(db, 'rewards'))
-        await setDoc(rewardRef, {
-          userId: user.uid,
+        const rewardRef = collection(db, 'rewards')
+        await addDoc(rewardRef, {
+          userId: user.id,
           taskId: task.id,
           amount: task.reward,
           description: `Completed: ${task.name}`,
@@ -95,6 +95,7 @@ export function Tasks() {
         })
 
         setTaskStatus(prev => ({ ...prev, [task.id]: 'completed' }))
+        refreshUserData()
       } catch (error) {
         console.error('Error claiming reward:', error)
       }
