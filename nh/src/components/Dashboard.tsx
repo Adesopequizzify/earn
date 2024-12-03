@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Card, CardContent } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { RewardsModal } from './RewardsModal'
 import { Tasks } from './Tasks'
 import { Leaderboard } from './Leaderboard'
@@ -42,6 +43,7 @@ export function Dashboard() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
   const { toast } = useToast()
   const { user, userData, refreshUserData } = useAuth()
+  const [showProfileModal, setShowProfileModal] = useState(false)
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -69,7 +71,7 @@ export function Dashboard() {
   }
 
   return (
-   <div className="flex flex-col min-h-screen bg-background">
+       <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 z-50 backdrop-blur-sm border-b border-muted/20 bg-background/60">
         <div className="flex justify-between items-center p-4 max-w-4xl mx-auto w-full">
           <div className="flex items-center space-x-3">
@@ -85,7 +87,7 @@ export function Dashboard() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => {}}>Profile</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setShowProfileModal(true)}>Profile</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -187,6 +189,30 @@ export function Dashboard() {
       </nav>
 
       <RewardsModal isOpen={showRewards} onClose={() => setShowRewards(false)} />
+               <Dialog open={showProfileModal} onOpenChange={setShowProfileModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Profile Summary</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl font-bold">
+                {user?.first_name?.[0]?.toUpperCase() || 'U'}
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">{user?.first_name} {user?.last_name}</h3>
+                <p className="text-sm text-muted-foreground">@{user?.username}</p>
+              </div>
+            </div>
+            <div>
+              <p><strong>Balance:</strong> {userData?.points || 0} SWHIT</p>
+              <p><strong>Rank:</strong> {userData?.rank || 'NOVICE'}</p>
+              <p><strong>Referral Code:</strong> {userData?.referralCode}</p>
+              <p><strong>Tasks Completed:</strong> {userData?.completedTasks?.length || 0}</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
