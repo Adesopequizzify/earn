@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { Medal } from 'lucide-react'
 
 interface LeaderboardUser {
+  telegramId: string
   username: string
   points: number
   avatar?: string
@@ -29,6 +30,7 @@ export function Leaderboard() {
         )
         const leaderboardSnapshot = await getDocs(leaderboardQuery)
         const leaderboardData = leaderboardSnapshot.docs.map(doc => ({
+          telegramId: doc.id,
           username: doc.data().username,
           points: doc.data().points,
           avatar: doc.data().avatar
@@ -69,7 +71,7 @@ export function Leaderboard() {
       <div className="space-y-2">
         {leaderboardData.map((user, index) => (
           <div
-            key={user.username}
+            key={user.telegramId}
             className={cn(
               "flex items-center justify-between p-4 rounded-xl",
               index === 0 ? "bg-[#423F1E]" : 
@@ -82,7 +84,7 @@ export function Leaderboard() {
               <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
                 {user.avatar ? (
                   <img
-                    src={user.avatar.startsWith('/') ? user.avatar : `/${user.avatar}`}
+                    src={user.avatar}
                     alt={`${user.username}'s avatar`}
                     className="w-6 h-6 rounded-full"
                   />
