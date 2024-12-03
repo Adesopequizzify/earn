@@ -6,12 +6,11 @@ import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 
 interface TelegramUser {
-  id: string
-  username: string
-  firstName: string
-  lastName: string
-  languageCode: string | null // Changed from string to string | null
-  isPremium: boolean
+  id: number;
+  first_name: string;
+  last_name: string | null;
+  username: string | null;
+  photo_url: string | null;
 }
 
 interface UserData {
@@ -27,16 +26,13 @@ interface UserData {
   languageCode: string | null
 }
 
-
-interface AuthContextType {
-  user: TelegramUser | null
-  userData: UserData | null
-  loading: boolean
-  error: string | null
-  refreshUserData: () => Promise<void>
-}
-
-const AuthContext = createContext<AuthContextType>({
+const AuthContext = createContext<{
+  user: TelegramUser | null;
+  userData: UserData | null;
+  loading: boolean;
+  error: string | null;
+  refreshUserData: () => Promise<void>;
+}>({
   user: null,
   userData: null,
   loading: true,
@@ -53,60 +49,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null)
 
   const createOrUpdateUser = async (telegramUser: TelegramUser) => {
-  try {
-    const userRef = doc(db, 'users', telegramUser.id)
-    const userSnap = await getDoc(userRef)
+    const userRef = doc(db, 'users', telegramUser.id.toString())
+    const userDoc = await getDoc(userRef)
 
-    if (!userSnap.exists()) {
-      const newUserData: UserData = {
-        telegramId: telegramUser.id,
-        username: telegramUser.username,
-        points: 1500,
-        rank: 'NOVICE',
-        referralCode: generateReferralCode(telegramUser.id),
-        referredBy: null,
-        createdAt: new Date(),
-        lastLogin: new Date(),
-        completedTasks: [],
-        languageCode: telegramUser.languageCode || 'en' // Provide default value
-      }
-      await setDoc(userRef, newUserData)
-      setUserData(newUserData)
-    } else {
-      const existingUserData = userSnap.data() as UserData
-      const updatedUserData = {
-        ...existingUserData,
-        lastLogin: new Date(),
-        languageCode: telegramUser.languageCode || existingUserData.languageCode || 'en'
-      }
-      await setDoc(userRef, updatedUserData, { merge: true })
-      setUserData(updatedUserData)
+    const userData: UserData = {
+      telegramId: telegramUser.id.toString(),
+      username: telegramUser.username || '',
+      points: userDoc.exists() ? userDoc.data()?.points || 0 : 0,
+      rank: userDoc.exists() ? userDoc.data()?.rank || 'Beginner' : 'Beginner',
+      referralCode: userDoc.exists() ? userDoc.data()?.referralCode || '' : '',
+      referredBy: userDoc.exists() ? userDoc.data()?.referredBy || null : null,
+      createdAt: userDoc.exists() ? userDoc.data()?.createdAt : new Date(),
+      lastLogin: new Date(),
+      completedTasks: userDoc.exists() ? userDoc.data()?.completedTasks || [] : [],
+      languageCode: userDoc.exists() ? userDoc.data()?.languageCode || null : null,
     }
-  } catch (err) {
-    setError('Failed to create or update user data')
-    console.error('Error in createOrUpdateUser:', err)
-  }
-}
 
+    await setDoc(userRef, userData, { merge: true })
+    setUserData(userData)
+  }
 
   const refreshUserData = async () => {
-    if (user) {
-      try {
-        const userRef = doc(db, 'users', user.id)
-        const userSnap = await getDoc(userRef)
-        if (userSnap.exists()) {
-          setUserData(userSnap.data() as UserData)
-        }
-      } catch (err) {
-        setError('Failed to refresh user data')
-        console.error('Error in refreshUserData:', err)
-      }
-    }
+    if (!user) return
+    await createOrUpdateUser(user)
   }
 
   useEffect(() => {
     const initAuth = async () => {
       try {
+        initializeTelegramWebApp() // Initialize Telegram Web App
         const telegramUser = getTelegramUser()
         if (telegramUser) {
           setUser(telegramUser)
@@ -131,6 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   )
 }
+
 
 function generateReferralCode(telegramId: string): string {
   return `REF${telegramId.substring(0, 6).toUpperCase()}`
