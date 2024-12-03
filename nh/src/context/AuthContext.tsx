@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 import { getTelegramUser, initializeTelegramWebApp } from '@/lib/telegram'
 import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc, increment, writeBatch } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
+import { processReferral, processPendingReferrals } from '@/lib/referralSystem'
 
 interface TelegramUser {
   id: number;
@@ -111,18 +112,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkPendingReferrals = async (userId: string) => {
     const pendingReferralsRef = collection(db, 'pendingReferrals')
-    const q = query(pendingReferralsRef, where('chatId', '==', userId))
+    const q = query(pendingReferralsRef, where('chatId', '==', userId), where('processed', '==', false))
     const querySnapshot = await getDocs(q)
 
-    if (!querySnapshot.empty) {
-      const pendingReferral = querySnapshot.docs[0].data()
-      const referralCode = pendingReferral.referralCode
-
-      // Process the referral
-      await processReferral(userId, referralCode)
-
-      // Delete the pending referral
-      await setDoc(querySnapshot.docs[0].ref, { processed: true }, { merge: true })
+    for (const doc of querySnapshot.docs) {
+      const data = doc.data()
+      await processReferral(userId, data.referralCode)
     }
   }
 
