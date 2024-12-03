@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { getTelegramUser, initializeTelegramWebApp } from '@/lib/telegram'
-import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc, increment } from 'firebase/firestore'
+import { doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc, increment, writeBatch } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 
 interface TelegramUser {
