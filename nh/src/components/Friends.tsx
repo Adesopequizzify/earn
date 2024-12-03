@@ -16,21 +16,13 @@ export function Friends() {
   const { toast } = useToast()
 
   const getReferralLink = () => {
-    return `https://t.me/wheatsol_bot?start=${userData?.referralCode}`
+    return `https://t.me/wheatsol_bot/app?startapp=${userData?.referralCode}`
   }
 
-  const handleShare = async () => {
+  const handleShare = () => {
     const referralLink = getReferralLink()
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Join WheatChain',
-          text: 'Use my referral code to join WheatChain and earn rewards!',
-          url: referralLink,
-        })
-      } catch (error) {
-        console.error('Error sharing:', error)
-      }
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+      window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent('Join WheatChain and earn rewards! Use my referral link:')}`)
     } else {
       handleCopyLink()
     }
@@ -38,26 +30,42 @@ export function Friends() {
 
   const handleCopyLink = () => {
     const referralLink = getReferralLink()
-    navigator.clipboard.writeText(referralLink).then(() => {
+    if (window.Telegram?.WebApp?.readTextFromClipboard) {
+      window.Telegram.WebApp.readTextFromClipboard(referralLink)
       toast({
         title: "Link copied",
         description: "Referral link copied to clipboard!",
       })
-    }, (err) => {
-      console.error('Could not copy text: ', err)
-    })
-  }
-
-  const handleCopyCode = () => {
-    if (userData?.referralCode) {
-      navigator.clipboard.writeText(userData.referralCode).then(() => {
+    } else {
+      navigator.clipboard.writeText(referralLink).then(() => {
         toast({
-          title: "Code copied",
-          description: "Referral code copied to clipboard!",
+          title: "Link copied",
+          description: "Referral link copied to clipboard!",
         })
       }, (err) => {
         console.error('Could not copy text: ', err)
       })
+    }
+  }
+
+  const handleCopyCode = () => {
+    if (userData?.referralCode) {
+      if (window.Telegram?.WebApp?.readTextFromClipboard) {
+        window.Telegram.WebApp.readTextFromClipboard(userData.referralCode)
+        toast({
+          title: "Code copied",
+          description: "Referral code copied to clipboard!",
+        })
+      } else {
+        navigator.clipboard.writeText(userData.referralCode).then(() => {
+          toast({
+            title: "Code copied",
+            description: "Referral code copied to clipboard!",
+          })
+        }, (err) => {
+          console.error('Could not copy text: ', err)
+        })
+      }
     } else {
       toast({
         title: "Error",
