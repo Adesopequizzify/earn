@@ -23,6 +23,7 @@ interface UserData {
   referredBy: string | null
   createdAt: Date
   lastLogin: Date
+  completedTasks: string[]
 }
 
 interface AuthContextType {
@@ -64,6 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           referredBy: null,
           createdAt: new Date(),
           lastLogin: new Date(),
+          completedTasks: [], // Add this line
         }
         await setDoc(userRef, newUserData)
         setUserData(newUserData)
