@@ -46,7 +46,7 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext)
 
 function generateReferralCode(telegramId: string): string {
-  return `REF${telegramId.substring(0, 6).toUpperCase()}`
+  return `WC${telegramId.substring(0, 6).toUpperCase()}`
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -91,16 +91,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           languageCode: telegramUser.language_code
         }
 
-        // Check for referral code in URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const referralCode = urlParams.get('ref');
+        const webApp = window.Telegram?.WebApp
+        const startParam = webApp?.initDataUnsafe?.start_param
         
-        if (referralCode) {
+        if (startParam) {
           console.log('Processing referral for new user');
-          const referralResult = await processReferral(telegramUser.id.toString(), referralCode);
+          const referralResult = await processReferral(telegramUser.id.toString(), startParam);
           if (referralResult) {
             newUserData.referredBy = referralResult.referrerId;
-            newUserData.points += 1500; // Bonus points for being referred
+            newUserData.points += 1000; // Bonus points for being referred
           }
         }
 
@@ -150,4 +149,5 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </AuthContext.Provider>
   )
-        }
+}
+
