@@ -62,8 +62,8 @@ export function Leaderboard() {
   }
 
   const getDisplayName = (user: LeaderboardUser) => {
-    if (user.username) return user.username
-    return `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}`
+    const fullName = `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}`.trim()
+    return fullName || user.username || 'Anonymous User'
   }
 
   return (
