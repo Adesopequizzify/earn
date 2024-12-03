@@ -21,7 +21,7 @@ export function Friends() {
 
   const handleShare = () => {
     const referralLink = getReferralLink()
-    if (window.Telegram?.WebApp?.openTelegramLink) {
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openTelegramLink) {
       window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent('Join WheatChain and earn rewards! Use my referral link:')}`)
     } else {
       handleCopyLink()
@@ -30,7 +30,7 @@ export function Friends() {
 
   const handleCopyLink = () => {
     const referralLink = getReferralLink()
-    if (window.Telegram?.WebApp?.readTextFromClipboard) {
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp?.readTextFromClipboard) {
       window.Telegram.WebApp.readTextFromClipboard(referralLink)
       toast({
         title: "Link copied",
@@ -50,7 +50,7 @@ export function Friends() {
 
   const handleCopyCode = () => {
     if (userData?.referralCode) {
-      if (window.Telegram?.WebApp?.readTextFromClipboard) {
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp?.readTextFromClipboard) {
         window.Telegram.WebApp.readTextFromClipboard(userData.referralCode)
         toast({
           title: "Code copied",
