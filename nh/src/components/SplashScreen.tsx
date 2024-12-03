@@ -1,7 +1,22 @@
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
+import { useAuth } from '@/context/AuthContext'
 
 export function SplashScreen() {
+  const { loading, user } = useAuth()
+  const [status, setStatus] = useState('Initializing...')
+
+  useEffect(() => {
+    if (loading) {
+      setStatus('Connecting to Telegram...')
+    } else if (user) {
+      setStatus('Loading your profile...')
+    } else {
+      setStatus('Unable to connect. Please try again.')
+    }
+  }, [loading, user])
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background">
       <motion.div
@@ -17,7 +32,7 @@ export function SplashScreen() {
         transition={{ delay: 0.5, duration: 0.5 }}
         className="mt-8 text-2xl font-bold text-primary"
       >
-        Initializing...
+        {status}
       </motion.h1>
     </div>
   )
