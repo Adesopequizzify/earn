@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useAuth } from '@/context/AuthContext'
+import { Loader2 } from 'lucide-react'
 
 interface RewardsModalProps {
   isOpen: boolean
@@ -16,32 +17,41 @@ interface Reward {
   description: string
   amount: number
   date: string
+  type?: 'referral' | 'welcome' | 'task'
 }
 
 export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
   const [rewardsData, setRewardsData] = useState<Reward[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()
 
   useEffect(() => {
     const fetchRewards = async () => {
-      if (user) {
-        const rewardsRef = collection(db, 'rewards')
-        const rewardsQuery = query(
-          rewardsRef,
-          where('userId', '==', user.id),
-          orderBy('date', 'desc'),
-          limit(10)
-        )
+      if (user?.id) {
+        setLoading(true)
+        setError(null)
         try {
+          const rewardsRef = collection(db, 'rewards')
+          const rewardsQuery = query(
+            rewardsRef,
+            where('userId', '==', user.id.toString()),
+            orderBy('date', 'desc'),
+            limit(50)
+          )
+
           const rewardsSnapshot = await getDocs(rewardsQuery)
-          const rewardsData = rewardsSnapshot.docs.map(doc => ({
+          const rewards = rewardsSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
           } as Reward))
-          setRewardsData(rewardsData)
+
+          setRewardsData(rewards)
         } catch (error) {
           console.error("Error fetching rewards:", error)
-          // Here you might want to show an error message to the user
+          setError("Failed to load rewards. Please try again later.")
+        } finally {
+          setLoading(false)
         }
       }
     }
@@ -49,17 +59,38 @@ export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
     if (isOpen) {
       fetchRewards()
     }
-  }, [isOpen, user])
+  }, [isOpen, user?.id])
+
+  const getRewardIcon = (type?: string) => {
+    switch (type) {
+      case 'referral':
+        return '👥'
+      case 'welcome':
+        return '🎉'
+      case 'task':
+        return '✅'
+      default:
+        return '💰'
+    }
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Your Rewards</DialogTitle>
+          <DialogTitle>Your Rewards History</DialogTitle>
         </DialogHeader>
         <ScrollArea className="max-h-[60vh] overflow-y-auto pr-4">
-          {rewardsData.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No rewards claimed yet</div>
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-8 text-red-500">{error}</div>
+          ) : rewardsData.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No rewards claimed yet. Start inviting friends to earn rewards!
+            </div>
           ) : (
             <div className="space-y-4">
               {rewardsData.map((reward) => (
@@ -67,13 +98,23 @@ export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
                   key={reward.id}
                   className="flex items-center justify-between py-4 border-b last:border-b-0"
                 >
-                  <div>
-                    <p>{reward.description}</p>
-                    <p className="text-sm text-muted-foreground">{new Date(reward.date).toLocaleDateString()}</p>
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">{getRewardIcon(reward.type)}</span>
+                    <div>
+                      <p className="font-medium">{reward.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(reward.date).toLocaleDateString(undefined, {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex flex-col items-end">
-                    <span className="text-green-500">+{reward.amount} SWHIT</span>
-                    <span className="text-xs text-muted-foreground">Received</span>
+                    <span className="text-green-500 font-semibold">+{reward.amount} SWHIT</span>
                   </div>
                 </div>
               ))}
