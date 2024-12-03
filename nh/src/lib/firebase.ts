@@ -1,5 +1,4 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
-import { getAuth, sendEmailVerification, User, reload } from 'firebase/auth'
 import { getFirestore, doc, setDoc, getDoc, updateDoc, increment, collection, query, where, getDocs, addDoc } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -12,34 +11,29 @@ const firebaseConfig = {
 }
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
-const auth = getAuth(app)
 const db = getFirestore(app)
 
-export { app, auth, db }
+export { app, db }
 
-export const createUserDocument = async (user: User, username: string, referralCode?: string) => {
-  if (!user) return
-
-  const userRef = doc(db, 'users', user.uid)
+export const createUserDocument = async (telegramId: string, username: string, referralCode?: string) => {
+  const userRef = doc(db, 'users', telegramId)
   const snapshot = await getDoc(userRef)
 
   if (!snapshot.exists()) {
-    const { email } = user
     const newUserData = {
       username,
-      email,
       points: 1500,
       rank: 'NOVICE',
       createdAt: new Date(),
-      emailVerified: false,
-      referralCode: generateReferralCode(),
+      referralCode: generateReferralCode(telegramId),
+      completedTasks: [],
     }
 
     try {
       await setDoc(userRef, newUserData)
 
       if (referralCode) {
-        await handleReferral(referralCode, user.uid)
+        await handleReferral(referralCode, telegramId)
       }
     } catch (error) {
       console.error("Error creating user document", error)
@@ -47,8 +41,8 @@ export const createUserDocument = async (user: User, username: string, referralC
   }
 }
 
-const generateReferralCode = () => {
-  return Math.random().toString(36).substring(2, 8).toUpperCase()
+const generateReferralCode = (telegramId: string) => {
+  return `REF${telegramId.substring(0, 6).toUpperCase()}`
 }
 
 const handleReferral = async (referralCode: string, newUserId: string) => {
@@ -76,35 +70,6 @@ const handleReferral = async (referralCode: string, newUserId: string) => {
       referredId: newUserId,
       date: new Date()
     })
-  }
-}
-
-export const sendVerificationEmail = async (user: User) => {
-  try {
-    await sendEmailVerification(user)
-  } catch (error) {
-    console.error("Error sending verification email", error)
-    throw error
-  }
-}
-
-export const checkEmailVerification = async (user: User): Promise<boolean> => {
-  try {
-    await reload(user)
-    return user.emailVerified
-  } catch (error) {
-    console.error("Error checking email verification", error)
-    throw error
-  }
-}
-
-export const updateUserEmailVerificationStatus = async (userId: string, isVerified: boolean) => {
-  const userRef = doc(db, 'users', userId)
-  try {
-    await updateDoc(userRef, { emailVerified: isVerified })
-  } catch (error) {
-    console.error("Error updating user email verification status", error)
-    throw error
   }
 }
 
