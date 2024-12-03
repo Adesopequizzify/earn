@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { SplashScreen } from '@/components/SplashScreen'
 import { Dashboard } from '@/components/Dashboard'
-import { isTelegramWebApp } from '@/lib/telegram'
+import { isTelegramWebApp, showTelegramAlert } from '@/lib/telegram'
 
 export default function Home() {
   const { user, userData, loading, error } = useAuth()
@@ -42,7 +42,10 @@ export default function Home() {
             {error || 'Unable to authenticate. Please try again.'}
           </p>
           <button 
-            onClick={() => window.location.reload()} 
+            onClick={() => {
+              showTelegramAlert('Retrying connection...')
+              window.location.reload()
+            }} 
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
           >
             Retry
