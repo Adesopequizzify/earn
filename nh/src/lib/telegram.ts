@@ -19,13 +19,14 @@ export const getTelegramUser = () => {
         username: user.username || '',
         firstName: user.first_name,
         lastName: user.last_name || '',
-        languageCode: user.language_code,
+        languageCode: user.language_code || null, // Handle potentially undefined language_code
         isPremium: user.is_premium || false,
       }
     }
   }
   return null
 }
+
 
 export const closeTelegramWebApp = () => {
   if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
