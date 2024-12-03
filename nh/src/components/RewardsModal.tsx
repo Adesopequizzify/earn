@@ -32,12 +32,17 @@ export function RewardsModal({ isOpen, onClose }: RewardsModalProps) {
           orderBy('date', 'desc'),
           limit(10)
         )
-        const rewardsSnapshot = await getDocs(rewardsQuery)
-        const rewardsData = rewardsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Reward))
-        setRewardsData(rewardsData)
+        try {
+          const rewardsSnapshot = await getDocs(rewardsQuery)
+          const rewardsData = rewardsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          } as Reward))
+          setRewardsData(rewardsData)
+        } catch (error) {
+          console.error("Error fetching rewards:", error)
+          // Here you might want to show an error message to the user
+        }
       }
     }
 
