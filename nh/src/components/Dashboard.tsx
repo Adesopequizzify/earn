@@ -69,14 +69,14 @@ export function Dashboard() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+   <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 z-50 backdrop-blur-sm border-b border-muted/20 bg-background/60">
         <div className="flex justify-between items-center p-4 max-w-4xl mx-auto w-full">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold">
-              {user?.firstName?.[0]?.toUpperCase() || 'U'}
+              {user?.first_name?.[0]?.toUpperCase() || 'U'}
             </div>
-            <span className="font-medium text-primary">{user?.firstName || 'User'}</span>
+            <span className="font-medium text-primary">{user?.first_name || 'User'}</span>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -86,7 +86,6 @@ export function Dashboard() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onSelect={() => {}}>Profile</DropdownMenuItem>
-              
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
